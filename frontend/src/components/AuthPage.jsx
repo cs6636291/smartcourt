@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import client from '../api/client';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function AuthPage({ onLoginSuccess, onBackToHome }) {
   // Views: 'login' | 'register_email' | 'register_otp' | 'register_details'
@@ -8,6 +9,7 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +20,8 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
   // OTP state (6 digits)
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
   const [otpError, setOtpError] = useState('');
-  const [otpInfo, setOtpInfo] = useState('');
+  const [otpNotice, setOtpNotice] = useState('');
+  const [devOtp, setDevOtp] = useState('');
   const otpInputRefs = useRef([]);
 
   // Registration profile details state
@@ -29,7 +32,9 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
     gender: 'ชาย',
     std_id: '',
     password: '',
+    confirm_password: '',
   });
+  const [showRegPassword, setShowRegPassword] = useState(false);
   const [profileError, setProfileError] = useState('');
 
   // ====================== 1. LOGIN HANDLER ======================
@@ -37,7 +42,7 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
     e?.preventDefault();
     setLoginError('');
 
-    if (!loginEmail) {
+    if (!loginEmail.trim()) {
       setLoginError('กรุณากรอกอีเมล');
       return;
     }
@@ -46,18 +51,10 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
       return;
     }
 
-    // Check requirement: password length >= 8 and has characters + numbers
-    const hasChar = /[A-Za-z]/.test(loginPassword);
-    const hasNum = /[0-9]/.test(loginPassword);
-    if (loginPassword.length < 8 || !hasChar || !hasNum) {
-      setLoginError('รหัสผ่านจะต้องมีอักขระและตัวเลขอย่างน้อย 8 ตัว');
-      return;
-    }
-
     setLoading(true);
     try {
       const res = await client.post('/accounts/login/', {
-        email: loginEmail,
+        email: loginEmail.trim(),
         password: loginPassword,
       });
       localStorage.setItem('access_token', res.data.access);
@@ -65,7 +62,12 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
       localStorage.setItem('user_info', JSON.stringify(res.data.user));
       onLoginSuccess(res.data.user);
     } catch (err) {
-      setLoginError(err.response?.data?.detail || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+      const detail = err.response?.data?.detail;
+      if (detail) {
+        setLoginError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+      } else {
+        setLoginError(err.response?.data?.error || 'รหัสผ่านจะต้องมีอักขระและตัวเลขอย่างน้อย 8 ตัว');
+      }
     } finally {
       setLoading(false);
     }
@@ -77,15 +79,21 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
     setEmailError('');
 
     const emailPattern = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
-    if (!regEmail || !emailPattern.test(regEmail)) {
+    const trimmedEmail = regEmail.trim();
+    if (!trimmedEmail || !emailPattern.test(trimmedEmail)) {
       setEmailError('อีเมลไม่ถูกต้อง');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await client.post('/accounts/send-otp/', { email: regEmail });
-      setOtpInfo(res.data.message || 'ส่ง OTP แล้ว (รหัสทดสอบ: 123456)');
+      const res = await client.post('/accounts/send-otp/', { email: trimmedEmail });
+      setOtpNotice(res.data.message);
+      if (res.data.otp) {
+        setDevOtp(res.data.otp);
+      } else {
+        setDevOtp('');
+      }
       setView('register_otp');
     } catch (err) {
       setEmailError(err.response?.data?.error || 'เกิดข้อผิดพลาดในการส่ง OTP');
@@ -138,7 +146,7 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
     setLoading(true);
     try {
       await client.post('/accounts/verify-otp/', {
-        email: regEmail,
+        email: regEmail.trim(),
         otp: otpValue,
       });
       setView('register_details');
@@ -150,10 +158,11 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
   };
 
   const handleResendOtp = async () => {
+    setOtpError('');
     try {
-      const res = await client.post('/accounts/send-otp/', { email: regEmail });
-      setOtpInfo(res.data.message || 'ส่ง OTP ใหม่เรียบร้อยแล้ว');
-      setOtpError('');
+      const res = await client.post('/accounts/send-otp/', { email: regEmail.trim() });
+      setOtpNotice(res.data.message);
+      if (res.data.otp) setDevOtp(res.data.otp);
     } catch (err) {
       setOtpError(err.response?.data?.error || 'ไม่สามารถส่ง OTP ใหม่ได้');
     }
@@ -164,12 +173,12 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
     e?.preventDefault();
     setProfileError('');
 
-    if (!profileData.first_name || !profileData.last_name || !profileData.std_id) {
+    if (!profileData.first_name.trim() || !profileData.last_name.trim() || !profileData.std_id.trim()) {
       setProfileError('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
     }
 
-    if (profileData.std_id.length !== 13) {
+    if (profileData.std_id.trim().length !== 13) {
       setProfileError('รหัสนักศึกษาต้องมีความยาว 13 หลัก');
       return;
     }
@@ -186,22 +195,27 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
       return;
     }
 
+    if (profileData.confirm_password && profileData.password !== profileData.confirm_password) {
+      setProfileError('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+      return;
+    }
+
     setLoading(true);
     try {
       const genderVal = profileData.gender === 'หญิง' ? 'female' : 'male';
       await client.post('/accounts/register/', {
-        email: regEmail,
+        email: regEmail.trim(),
         password: profileData.password,
-        first_name: profileData.first_name,
-        last_name: profileData.last_name,
-        nickname: profileData.nickname,
-        std_id: profileData.std_id,
+        first_name: profileData.first_name.trim(),
+        last_name: profileData.last_name.trim(),
+        nickname: profileData.nickname.trim(),
+        std_id: profileData.std_id.trim(),
         gender: genderVal,
       });
 
       // Auto login after successful registration
       const loginRes = await client.post('/accounts/login/', {
-        email: regEmail,
+        email: regEmail.trim(),
         password: profileData.password,
       });
       localStorage.setItem('access_token', loginRes.data.access);
@@ -212,6 +226,7 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
       const resp = err.response?.data;
       if (resp?.std_id) setProfileError(`รหัสนักศึกษา: ${resp.std_id[0]}`);
       else if (resp?.email) setProfileError(`อีเมล: ${resp.email[0]}`);
+      else if (resp?.password) setProfileError(`รหัสผ่าน: ${resp.password[0]}`);
       else if (resp?.error) setProfileError(resp.error);
       else setProfileError('เกิดข้อผิดพลาดในการลงทะเบียน');
     } finally {
@@ -224,7 +239,7 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
       {/* Return to Home button in top corner */}
       <button
         onClick={onBackToHome}
-        className="absolute top-6 left-6 text-xs text-gray-500 hover:text-gray-800 flex items-center gap-1.5 transition"
+        className="absolute top-6 left-6 text-xs text-gray-500 hover:text-gray-800 flex items-center gap-1.5 transition cursor-pointer"
       >
         ← กลับหน้าหลัก
       </button>
@@ -247,11 +262,14 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
       {/* VIEW 1: LOGIN (รูปที่ 5 และ รูปที่ 2)                           */}
       {/* ============================================================== */}
       {view === 'login' && (
-        <div className="w-full max-w-xs space-y-4">
+        <form onSubmit={handleLogin} className="w-full max-w-xs space-y-4">
           <div>
             <label className="block text-sm text-gray-900 mb-1">อีเมล</label>
             <input
               type="email"
+              name="email"
+              autoComplete="email"
+              required
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
               className="w-full border border-black px-3 py-2 text-sm bg-white focus:outline-none"
@@ -260,12 +278,26 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
 
           <div>
             <label className="block text-sm text-gray-900 mb-1">รหัสผ่าน</label>
-            <input
-              type="password"
-              value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
-              className="w-full border border-black px-3 py-2 text-sm bg-white focus:outline-none"
-            />
+            <div className="relative">
+              <input
+                type={showLoginPassword ? 'text' : 'password'}
+                name="password"
+                id="login-password"
+                autoComplete="current-password"
+                required
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                className="w-full border border-black px-3 py-2 pr-9 text-sm bg-white focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowLoginPassword(!showLoginPassword)}
+                className="absolute right-2.5 top-2.5 text-gray-500 hover:text-gray-800"
+                tabIndex={-1}
+              >
+                {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
             {/* ข้อความ error สีแดงใต้รหัสผ่านตามรูปที่ 2 */}
             {loginError && (
               <p className="text-red-600 text-xs mt-1.5 leading-snug">
@@ -281,7 +313,7 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
                 setView('register_email');
                 setEmailError('');
               }}
-              className="text-gray-400 hover:text-gray-600 underline text-sm transition"
+              className="text-gray-400 hover:text-gray-600 underline text-sm transition cursor-pointer"
             >
               ยังไม่มี account?
             </button>
@@ -289,29 +321,30 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
 
           <div className="pt-2 flex justify-center">
             <button
-              type="button"
+              type="submit"
               disabled={loading}
-              onClick={handleLogin}
-              className="border border-black px-6 py-1.5 text-sm font-medium text-black bg-white hover:bg-black hover:text-white transition disabled:opacity-50"
+              className="border border-black px-6 py-1.5 text-sm font-medium text-black bg-white hover:bg-black hover:text-white transition disabled:opacity-50 cursor-pointer"
             >
               {loading ? 'กำลังเข้าสู่ระบบ...' : 'ยืนยัน'}
             </button>
           </div>
-        </div>
+        </form>
       )}
 
       {/* ============================================================== */}
       {/* VIEW 2: REGISTER STEP 1 - กรอกอีเมล (รูปที่ 4)                    */}
       {/* ============================================================== */}
       {view === 'register_email' && (
-        <div className="w-full max-w-xs space-y-4">
+        <form onSubmit={handleEmailSubmit} className="w-full max-w-xs space-y-4">
           <div>
             <label className="block text-sm text-gray-900 mb-1">กรอกอีเมล</label>
             <input
               type="email"
+              name="reg_email"
+              autoComplete="email"
+              required
               value={regEmail}
               onChange={(e) => setRegEmail(e.target.value)}
-              placeholder=""
               className="w-full border border-black px-3 py-2 text-sm bg-white focus:outline-none"
             />
             {/* ข้อความ error สีแดง: อีเมลไม่ถูกต้อง ตามรูปที่ 4 */}
@@ -324,7 +357,7 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
             <button
               type="button"
               onClick={() => setView('login')}
-              className="text-gray-400 hover:text-gray-600 underline"
+              className="text-gray-400 hover:text-gray-600 underline cursor-pointer"
             >
               มี account แล้ว? เข้าสู่ระบบ
             </button>
@@ -332,22 +365,21 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
 
           <div className="pt-3 flex justify-center">
             <button
-              type="button"
+              type="submit"
               disabled={loading}
-              onClick={handleEmailSubmit}
-              className="border border-black px-6 py-1.5 text-sm font-medium text-black bg-white hover:bg-black hover:text-white transition disabled:opacity-50"
+              className="border border-black px-6 py-1.5 text-sm font-medium text-black bg-white hover:bg-black hover:text-white transition disabled:opacity-50 cursor-pointer"
             >
               {loading ? 'กำลังส่ง OTP...' : 'ยืนยัน'}
             </button>
           </div>
-        </div>
+        </form>
       )}
 
       {/* ============================================================== */}
       {/* VIEW 3: REGISTER STEP 2 - กรอก OTP (รูปที่ 1)                    */}
       {/* ============================================================== */}
       {view === 'register_otp' && (
-        <div className="w-full max-w-sm space-y-4 flex flex-col items-center">
+        <form onSubmit={handleOtpSubmit} className="w-full max-w-sm space-y-4 flex flex-col items-center">
           <h3 className="text-sm font-medium text-gray-900 mb-2">กรอก OTP</h3>
 
           {/* 6 Square Input Boxes */}
@@ -357,6 +389,7 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
                 key={idx}
                 ref={(el) => (otpInputRefs.current[idx] = el)}
                 type="text"
+                inputMode="numeric"
                 maxLength={1}
                 value={digit}
                 onChange={(e) => handleOtpChange(idx, e.target.value)}
@@ -368,8 +401,15 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
 
           {/* Error & Info Message */}
           {otpError && <p className="text-red-600 text-xs">{otpError}</p>}
-          {otpInfo && !otpError && (
-            <p className="text-emerald-600 text-xs">{otpInfo}</p>
+          {otpNotice && !otpError && (
+            <p className="text-emerald-700 text-xs text-center">{otpNotice}</p>
+          )}
+
+          {/* ถ้ายังไม่ได้ตั้งค่า SMTP จะแสดงรหัสทดสอบให้ที่นี่ */}
+          {devOtp && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-900 text-xs px-3 py-1.5 rounded">
+              💡 รหัส OTP สำหรับทดสอบ: <strong className="text-red-700 font-mono text-sm tracking-widest">{devOtp}</strong>
+            </div>
           )}
 
           {/* Link: ยังไม่ได้รับ OTP ? ส่งใหม่อีกครั้ง */}
@@ -377,7 +417,7 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
             <button
               type="button"
               onClick={handleResendOtp}
-              className="text-gray-400 hover:text-gray-600 underline text-xs transition"
+              className="text-gray-400 hover:text-gray-600 underline text-xs transition cursor-pointer"
             >
               ยังไม่ได้รับ OTP ? ส่งใหม่อีกครั้ง
             </button>
@@ -385,28 +425,28 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
 
           <div className="pt-3 flex justify-center">
             <button
-              type="button"
+              type="submit"
               disabled={loading}
-              onClick={handleOtpSubmit}
-              className="border border-black px-6 py-1.5 text-sm font-medium text-black bg-white hover:bg-black hover:text-white transition disabled:opacity-50"
+              className="border border-black px-6 py-1.5 text-sm font-medium text-black bg-white hover:bg-black hover:text-white transition disabled:opacity-50 cursor-pointer"
             >
               {loading ? 'กำลังตรวจสอบ...' : 'ยืนยัน'}
             </button>
           </div>
-        </div>
+        </form>
       )}
 
       {/* ============================================================== */}
       {/* VIEW 4: REGISTER STEP 3 - ข้อมูลส่วนตัว (รูปที่ 3)                */}
       {/* ============================================================== */}
       {view === 'register_details' && (
-        <div className="w-full max-w-md space-y-4">
+        <form onSubmit={handleProfileSubmit} className="w-full max-w-md space-y-4">
           <div className="grid grid-cols-2 gap-4">
             {/* ซ้าย: ชื่อ */}
             <div>
               <label className="block text-sm text-gray-900 mb-1">ชื่อ</label>
               <input
                 type="text"
+                required
                 value={profileData.first_name}
                 onChange={(e) =>
                   setProfileData({ ...profileData, first_name: e.target.value })
@@ -420,6 +460,7 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
               <label className="block text-sm text-gray-900 mb-1">นามสกุล</label>
               <input
                 type="text"
+                required
                 value={profileData.last_name}
                 onChange={(e) =>
                   setProfileData({ ...profileData, last_name: e.target.value })
@@ -449,7 +490,7 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
                 onChange={(e) =>
                   setProfileData({ ...profileData, gender: e.target.value })
                 }
-                className="w-full border border-black px-3 py-2 text-sm bg-white focus:outline-none"
+                className="w-full border border-black px-3 py-2 text-sm bg-white focus:outline-none cursor-pointer"
               >
                 <option value="ชาย">ชาย</option>
                 <option value="หญิง">หญิง</option>
@@ -475,6 +516,7 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
               </label>
               <input
                 type="text"
+                required
                 maxLength={13}
                 value={profileData.std_id}
                 onChange={(e) =>
@@ -483,40 +525,67 @@ export default function AuthPage({ onLoginSuccess, onBackToHome }) {
                 className="w-full border border-black px-3 py-1.5 text-sm bg-white focus:outline-none"
               />
             </div>
-          </div>
 
-          {/* กำหนดรหัสผ่านสำหรับบัญชี */}
-          <div>
-            <label className="block text-sm text-gray-900 mb-1">
-              กำหนดรหัสผ่าน (≥ 8 ตัว มีอักขระและตัวเลข)
-            </label>
-            <input
-              type="password"
-              value={profileData.password}
-              onChange={(e) =>
-                setProfileData({ ...profileData, password: e.target.value })
-              }
-              placeholder="เช่น abcdefg1234"
-              className="w-full border border-black px-3 py-1.5 text-sm bg-white focus:outline-none"
-            />
+            {/* ซ้าย: กำหนดรหัสผ่าน */}
+            <div>
+              <label className="block text-sm text-gray-900 mb-1">
+                รหัสผ่าน
+              </label>
+              <div className="relative">
+                <input
+                  type={showRegPassword ? 'text' : 'password'}
+                  required
+                  value={profileData.password}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, password: e.target.value })
+                  }
+                  placeholder="≥ 8 ตัว (อักขระ+เลข)"
+                  className="w-full border border-black px-3 py-1.5 pr-8 text-sm bg-white focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowRegPassword(!showRegPassword)}
+                  className="absolute right-2 top-2 text-gray-500 hover:text-gray-800"
+                  tabIndex={-1}
+                >
+                  {showRegPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* ขวา: ยืนยันรหัสผ่าน */}
+            <div>
+              <label className="block text-sm text-gray-900 mb-1">
+                ยืนยันรหัสผ่าน
+              </label>
+              <input
+                type={showRegPassword ? 'text' : 'password'}
+                required
+                value={profileData.confirm_password}
+                onChange={(e) =>
+                  setProfileData({ ...profileData, confirm_password: e.target.value })
+                }
+                placeholder="กรอกรหัสผ่านซ้ำ"
+                className="w-full border border-black px-3 py-1.5 text-sm bg-white focus:outline-none"
+              />
+            </div>
           </div>
 
           {/* Error Message */}
           {profileError && (
-            <p className="text-red-600 text-xs text-center">{profileError}</p>
+            <p className="text-red-600 text-xs text-center mt-2 leading-snug">{profileError}</p>
           )}
 
           <div className="pt-3 flex justify-center">
             <button
-              type="button"
+              type="submit"
               disabled={loading}
-              onClick={handleProfileSubmit}
-              className="border border-black px-6 py-1.5 text-sm font-medium text-black bg-white hover:bg-black hover:text-white transition disabled:opacity-50"
+              className="border border-black px-6 py-1.5 text-sm font-medium text-black bg-white hover:bg-black hover:text-white transition disabled:opacity-50 cursor-pointer"
             >
               {loading ? 'กำลังบันทึก...' : 'ยืนยัน'}
             </button>
           </div>
-        </div>
+        </form>
       )}
     </div>
   );
