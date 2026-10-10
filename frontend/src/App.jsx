@@ -1,0 +1,352 @@
+import React, { useState, useEffect } from 'react';
+import client from './api/client';
+import {
+  FutsalGraphic,
+  BasketballGraphic,
+  VolleyballGraphic,
+  BadmintonGraphic,
+} from './components/CourtGraphics';
+import AuthModal from './components/AuthModal';
+import BookingModal from './components/BookingModal';
+import MyBookingsModal from './components/MyBookingsModal';
+import CalendarPicker from './components/CalendarPicker';
+import { Calendar, Clock, User, LogOut, Bookmark, RefreshCw, ChevronDown } from 'lucide-react';
+
+export default function App() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('08:00');
+
+  // Modals state
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isMyBookingsOpen, setIsMyBookingsOpen] = useState(false);
+  const [selectedCourtForBooking, setSelectedCourtForBooking] = useState(null);
+
+  // User state
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('user_info');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const fetchStatus = async (dateVal = selectedDate, timeVal = selectedTime) => {
+    setLoading(true);
+    try {
+      const params = {};
+      if (dateVal) params.date = dateVal;
+      if (timeVal) params.time = timeVal;
+      const res = await client.get('/courts/status/', { params });
+      setData(res.data);
+      if (!dateVal) setSelectedDate(res.data.selected_date);
+    } catch (err) {
+      console.error("Error fetching court status:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatus();
+  }, []);
+
+  const handleDateChange = (e) => {
+    const val = e.target.value;
+    setSelectedDate(val);
+    fetchStatus(val, selectedTime);
+  };
+
+  const handleTimeChange = (e) => {
+    const val = e.target.value;
+    setSelectedTime(val);
+    fetchStatus(selectedDate, val);
+  };
+
+  const handleCourtClick = (court) => {
+    if (!court.is_available) {
+      alert(`สนาม "${court.name}" ถูกจองแล้วในช่วงเวลา ${selectedTime} น.`);
+      return;
+    }
+    setSelectedCourtForBooking(court);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_info');
+    setCurrentUser(null);
+  };
+
+  // Courts separation for Floor 3
+  const futsalCourt = data?.floor_3?.find((c) => c.sport_type === 'futsal');
+  const basketballCourts = data?.floor_3?.filter((c) => c.sport_type === 'basketball') || [];
+
+  // Courts separation for Floor 7
+  const volleyballCourt = data?.floor_7?.find((c) => c.sport_type === 'volleyball');
+  const badmintonCourts = data?.floor_7?.filter((c) => c.sport_type === 'badminton') || [];
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc] text-gray-800 pb-16">
+      {/* 1. HEADER (อิงตาม Mockup หัวเว็บ) */}
+      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+          {/* Logo & Title */}
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-full bg-red-700 p-1 flex items-center justify-center shadow-md">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/th/1/1b/KMUTNB_Logo.png"
+                alt="KMUTNB Logo"
+                className="w-full h-full object-contain"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            </div>
+            <div>
+              <h1 className="text-base sm:text-lg font-bold text-gray-900 leading-tight">
+                ระบบจองสนามกีฬา ตึก 40 KMUTNB
+              </h1>
+              <p className="text-xs text-gray-500">มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ</p>
+            </div>
+          </div>
+
+          {/* ปุ่มเข้าสู่ระบบ / สมัครสมาชิก (ปุ่ม Static ยังกดไม่ได้ ตามคำขอ) */}
+          <div className="flex items-center">
+            <button
+              type="button"
+              disabled
+              className="px-5 py-1.5 text-xs font-semibold text-red-600 border border-red-500 rounded-full bg-white shadow-xs cursor-default select-none tracking-wide"
+            >
+              เข้าสู่ระบบ / สมัครสมาชิก
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* 2. SUBHEADER & FILTER CONTROLS (อิงตาม Mockup: sport court status + เลือกวันที่ + เลือกเวลา) */}
+      <main className="max-w-6xl mx-auto px-4 mt-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
+          {/* Status Box Title */}
+          <div className="inline-block border border-gray-800 bg-white px-4 py-1.5 rounded shadow-sm">
+            <span className="text-sm font-bold tracking-wide text-gray-900">
+              sport court status
+            </span>
+          </div>
+
+          {/* Date & Time Selectors */}
+          <div className="flex items-center gap-3">
+            {/* เลือกวันที่ (Interactive Calendar Picker รองรับ 5 วันตามเงื่อนไข) */}
+            <CalendarPicker
+              selectedDate={selectedDate}
+              allowedDates={data?.allowed_dates || []}
+              onSelectDate={(newDate) => {
+                setSelectedDate(newDate);
+                fetchStatus(newDate, selectedTime);
+              }}
+            />
+
+            {/* เลือกเวลา (08:00 - 20:00 ห่างกัน 1 ชม.) */}
+            <div className="relative">
+              <div className="flex items-center gap-1.5 border border-gray-400 bg-white px-3 py-1.5 rounded-full text-xs font-medium text-gray-700 shadow-sm hover:border-gray-600">
+                <Clock className="w-3.5 h-3.5 text-gray-500" />
+                <span>เวลา:</span>
+                <select
+                  value={selectedTime}
+                  onChange={handleTimeChange}
+                  className="bg-transparent font-semibold text-gray-800 focus:outline-none cursor-pointer"
+                >
+                  {data?.time_slots?.map((t) => (
+                    <option key={t} value={t}>
+                      {t} - {String(parseInt(t.split(':')[0]) + 1).padStart(2, '0')}:00 น.
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Refresh button */}
+            <button
+              onClick={() => fetchStatus(selectedDate, selectedTime)}
+              className="p-1.5 text-gray-500 hover:text-gray-800 hover:bg-gray-200 rounded-full transition"
+              title="รีเฟรชข้อมูล"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* 3. SECTION ชั้น 3 (อิงตาม Mockup) */}
+        <section className="mt-4">
+          <div className="inline-block border border-gray-800 bg-white px-3 py-1 rounded text-xs font-bold text-gray-900 mb-3 shadow-sm">
+            ชั้น 3
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* ฝั่งซ้าย: สนามฟุตซอล ชั้น 3 */}
+            <div className="border border-gray-400 bg-white rounded-lg p-5 flex flex-col justify-between items-center min-h-[380px] shadow-sm">
+              <div className="w-full flex-1 flex flex-col items-center justify-center">
+                <FutsalGraphic />
+                <span className="mt-4 text-xs font-medium text-gray-700">
+                  {futsalCourt?.name || 'สนามฟุตซอล ชั้น 3'}
+                </span>
+              </div>
+              <button
+                onClick={() => futsalCourt && handleCourtClick(futsalCourt)}
+                disabled={!futsalCourt?.is_available}
+                className={`mt-4 px-6 py-1 text-xs font-semibold rounded border transition-all ${
+                  futsalCourt?.is_available
+                    ? 'border-emerald-600 text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white cursor-pointer'
+                    : 'border-red-500 text-red-600 bg-red-50 cursor-not-allowed opacity-90'
+                }`}
+              >
+                {futsalCourt?.status_text || 'ว่าง'}
+              </button>
+            </div>
+
+            {/* ฝั่งขวา: แป้นบาสเกตบอล 1 - 5 ชั้น 3 */}
+            <div className="border border-gray-400 bg-white rounded-lg p-5 flex flex-col justify-between min-h-[380px] shadow-sm relative">
+              {/* แป้นบาสเกตบอล 1 (ตรงกลางบน) */}
+              {basketballCourts[0] && (
+                <div className="flex flex-col items-center mx-auto mb-2">
+                  <BasketballGraphic />
+                  <span className="text-[11px] text-gray-600 mt-1">{basketballCourts[0].name}</span>
+                  <button
+                    onClick={() => handleCourtClick(basketballCourts[0])}
+                    disabled={!basketballCourts[0].is_available}
+                    className={`mt-1 px-4 py-0.5 text-[11px] font-semibold rounded border ${
+                      basketballCourts[0].is_available
+                        ? 'border-emerald-600 text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white'
+                        : 'border-red-500 text-red-600 bg-red-50 cursor-not-allowed'
+                    }`}
+                  >
+                    {basketballCourts[0].status_text}
+                  </button>
+                </div>
+              )}
+
+              {/* แป้นบาสเกตบอล 2, 3, 4 (แนวตั้งฝั่งซ้ายกลาง) */}
+              <div className="grid grid-cols-2 gap-4 my-auto">
+                <div className="space-y-3">
+                  {basketballCourts.slice(1, 4).map((court) => (
+                    <div key={court.id} className="flex items-center gap-3">
+                      <BasketballGraphic />
+                      <div className="flex flex-col">
+                        <span className="text-[11px] text-gray-600">{court.name}</span>
+                        <button
+                          onClick={() => handleCourtClick(court)}
+                          disabled={!court.is_available}
+                          className={`mt-0.5 w-16 py-0.5 text-[11px] font-semibold rounded border ${
+                            court.is_available
+                              ? 'border-emerald-600 text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white'
+                              : 'border-red-500 text-red-600 bg-red-50 cursor-not-allowed'
+                          }`}
+                        >
+                          {court.status_text}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* แป้นบาสเกตบอล 5 (ตรงกลางขวาล่าง) */}
+                <div className="flex flex-col items-center justify-end">
+                  {basketballCourts[4] && (
+                    <div className="flex flex-col items-center">
+                      <BasketballGraphic />
+                      <span className="text-[11px] text-gray-600 mt-1">{basketballCourts[4].name}</span>
+                      <button
+                        onClick={() => handleCourtClick(basketballCourts[4])}
+                        disabled={!basketballCourts[4].is_available}
+                        className={`mt-1 px-4 py-0.5 text-[11px] font-semibold rounded border ${
+                          basketballCourts[4].is_available
+                            ? 'border-emerald-600 text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white'
+                            : 'border-red-500 text-red-600 bg-red-50 cursor-not-allowed'
+                        }`}
+                      >
+                        {basketballCourts[4].status_text}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. SECTION ชั้น 7 (อิงตาม Mockup) */}
+        <section className="mt-8">
+          <div className="inline-block border border-gray-800 bg-white px-3 py-1 rounded text-xs font-bold text-gray-900 mb-3 shadow-sm">
+            ชั้น 7
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* ฝั่งซ้าย: สนามวอลเลย์บอล 1 ชั้น 7 */}
+            <div className="border border-gray-400 bg-white rounded-lg p-5 flex flex-col justify-between items-center min-h-[380px] shadow-sm">
+              <div className="w-full flex-1 flex flex-col items-center justify-center">
+                <VolleyballGraphic />
+                <span className="mt-4 text-xs font-medium text-gray-700">
+                  {volleyballCourt?.name || 'สนามวอลเลย์บอล 1 ชั้น 7'}
+                </span>
+              </div>
+              <button
+                onClick={() => volleyballCourt && handleCourtClick(volleyballCourt)}
+                disabled={!volleyballCourt?.is_available}
+                className={`mt-4 px-6 py-1 text-xs font-semibold rounded border transition-all ${
+                  volleyballCourt?.is_available
+                    ? 'border-emerald-600 text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white cursor-pointer'
+                    : 'border-red-500 text-red-600 bg-red-50 cursor-not-allowed opacity-90'
+                }`}
+              >
+                {volleyballCourt?.status_text || 'ว่าง'}
+              </button>
+            </div>
+
+            {/* ฝั่งขวา: สนามแบดมินตัน 1 - 4 ชั้น 7 (ตาราง 2x2) */}
+            <div className="border border-gray-400 bg-white rounded-lg p-5 grid grid-cols-2 gap-4 min-h-[380px] shadow-sm">
+              {badmintonCourts.map((court) => (
+                <div
+                  key={court.id}
+                  className="border border-gray-300 rounded p-3 flex flex-col items-center justify-between bg-slate-50/50 hover:bg-slate-50 transition"
+                >
+                  <BadmintonGraphic />
+                  <span className="text-[11px] text-gray-700 text-center font-medium mt-1">
+                    {court.name}
+                  </span>
+                  <button
+                    onClick={() => handleCourtClick(court)}
+                    disabled={!court.is_available}
+                    className={`mt-2 w-16 py-0.5 text-[11px] font-semibold rounded border transition ${
+                      court.is_available
+                        ? 'border-emerald-600 text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white'
+                        : 'border-red-500 text-red-600 bg-red-50 cursor-not-allowed'
+                    }`}
+                  >
+                    {court.status_text}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+
+
+
+      <BookingModal
+        court={selectedCourtForBooking}
+        date={selectedDate}
+        time={selectedTime}
+        currentUser={currentUser}
+        isOpen={Boolean(selectedCourtForBooking)}
+        onClose={() => setSelectedCourtForBooking(null)}
+        onOpenLogin={() => setIsAuthOpen(true)}
+        onBookingSuccess={() => fetchStatus(selectedDate, selectedTime)}
+      />
+
+      <MyBookingsModal
+        isOpen={isMyBookingsOpen}
+        onClose={() => setIsMyBookingsOpen(false)}
+        onRefreshStatus={() => fetchStatus(selectedDate, selectedTime)}
+      />
+    </div>
+  );
+}
