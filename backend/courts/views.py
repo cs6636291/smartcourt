@@ -2,10 +2,15 @@ from datetime import date, datetime, timedelta
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from .models import Court, Appointment
 from .serializers import CourtSerializer, AppointmentSerializer
+
+TIME_SLOTS = tuple(f'{hour:02d}:00' for hour in range(8, 20))
+
 
 class CourtStatusView(APIView):
     """
@@ -16,27 +21,35 @@ class CourtStatusView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        today = date.today()
+        today = timezone.localdate()
         selected_date_str = request.query_params.get('date')
         selected_time_str = request.query_params.get('time', '08:00')
 
         if selected_date_str:
             try:
-                selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+                selected_date = date.fromisoformat(selected_date_str)
             except ValueError:
-                selected_date = today
+                return Response(
+                    {'error': 'รูปแบบวันที่ไม่ถูกต้อง (YYYY-MM-DD)'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         else:
             selected_date = today
 
-        # ดึงรายชื่อสนามทั้งหมด
-        courts = Court.objects.all()
+        if selected_time_str not in TIME_SLOTS:
+            return Response(
+                {'error': 'กรุณาเลือกช่วงเวลาระหว่าง 08:00 ถึง 19:00'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        # ดึงการจองที่ confirmed ในวันและเวลานั้น
-        booked_court_ids = Appointment.objects.filter(
+        selected_time = datetime.strptime(selected_time_str, '%H:%M').time()
+        courts = Court.objects.all()
+        booked_court_ids = set(Appointment.objects.filter(
             date=selected_date,
-            start_time__startswith=selected_time_str[:2],
+            start_time__lte=selected_time,
+            end_time__gt=selected_time,
             status='confirmed'
-        ).values_list('court_id', flat=True)
+        ).values_list('court_id', flat=True))
 
         results_floor_3 = []
         results_floor_7 = []
@@ -56,16 +69,12 @@ class CourtStatusView(APIView):
             else:
                 results_floor_7.append(court_data)
 
-        # รายการช่วงเวลาสำเร็จรูป 08:00 - 20:00 ห่างกัน 1 ชม. (รวม 12 ช่องเวลา)
-        time_slots = [f"{hour:02d}:00" for hour in range(8, 20)]
-
-        # รายการวันจองล่วงหน้า 5 วันนับจากปัจจุบัน
         allowed_dates = [(today + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(5)]
 
         return Response({
             'selected_date': selected_date.strftime('%Y-%m-%d'),
             'selected_time': selected_time_str,
-            'time_slots': time_slots,
+            'time_slots': TIME_SLOTS,
             'allowed_dates': allowed_dates,
             'floor_3': results_floor_3,
             'floor_7': results_floor_7,
@@ -95,23 +104,26 @@ class AppointmentCreateView(generics.CreateAPIView):
         court = get_object_or_404(Court, pk=court_id)
         
         try:
-            book_date = datetime.strptime(book_date_str, '%Y-%m-%d').date()
-        except ValueError:
+            book_date = date.fromisoformat(book_date_str)
+        except (TypeError, ValueError):
+            return Response({'error': 'รูปแบบวันที่ไม่ถูกต้อง (YYYY-MM-DD)'}, status=status.HTTP_400_BAD_REQUEST)
+        if book_date.isoformat() != book_date_str:
             return Response({'error': 'รูปแบบวันที่ไม่ถูกต้อง (YYYY-MM-DD)'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 1. เช็คช่วงเวลา 5 วัน
-        today = date.today()
-        max_date = today + timedelta(days=4)
-        if book_date < today or book_date > max_date:
+        today = timezone.localdate()
+        if not today <= book_date <= today + timedelta(days=4):
             return Response({'error': 'สามารถจองสนามล่วงหน้าได้ไม่เกิน 5 วันนับจากวันปัจจุบัน'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # คำนวณ end_time (1 ชม. ถัดไป)
-        try:
-            start_hour = int(start_time_str.split(':')[0])
-            start_time = datetime.strptime(f"{start_hour:02d}:00:00", '%H:%M:%S').time()
-            end_time = datetime.strptime(f"{(start_hour + 1):02d}:00:00", '%H:%M:%S').time()
-        except Exception:
-            return Response({'error': 'รูปแบบเวลาไม่ถูกต้อง'}, status=status.HTTP_400_BAD_REQUEST)
+        if not isinstance(start_time_str, str) or start_time_str not in TIME_SLOTS:
+            return Response(
+                {'error': 'กรุณาเลือกช่วงเวลาระหว่าง 08:00 ถึง 19:00 เป็นช่วงละ 1 ชั่วโมง'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        start_time = datetime.strptime(start_time_str, '%H:%M').time()
+        end_time = datetime.strptime(
+            f'{start_time.hour + 1:02d}:00', '%H:%M'
+        ).time()
 
         appointment = Appointment(
             user=request.user,
@@ -123,9 +135,15 @@ class AppointmentCreateView(generics.CreateAPIView):
         )
 
         try:
-            appointment.save()
+            with transaction.atomic():
+                appointment.save()
         except ValidationError as e:
             return Response({'error': e.messages[0] if hasattr(e, 'messages') else str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except IntegrityError:
+            return Response(
+                {'error': 'ช่วงเวลานี้ถูกจองแล้ว หรือคุณมีการจองในวันดังกล่าวแล้ว'},
+                status=status.HTTP_409_CONFLICT,
+            )
 
         return Response({
             'message': 'จองสนามสำเร็จเรียบร้อยแล้ว',
