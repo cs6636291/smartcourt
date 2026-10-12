@@ -2,12 +2,17 @@
 Django settings for smartcourt_config project.
 """
 
+import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-gk%jv53skxd(4-4c%r$4^u%b-8jv=@b+tjzsna-f9#yv1jgo)7'
+# โหลดการตั้งค่าจากไฟล์ .env
+load_dotenv(BASE_DIR / '.env')
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-gk%jv53skxd(4-4c%r$4^u%b-8jv=@b+tjzsna-f9#yv1jgo)7')
 
 DEBUG = True
 
@@ -96,6 +101,15 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': False,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+# ==================== Real Email Sending Configuration (SMTP) ====================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'smartcourt.kmutnb@gmail.com')
 
 # CORS Configuration ให้ Frontend React เรียกใช้ API ได้
 CORS_ALLOW_ALL_ORIGINS = True

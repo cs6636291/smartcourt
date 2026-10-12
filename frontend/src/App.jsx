@@ -9,10 +9,14 @@ import {
 import BookingModal from './components/BookingModal';
 import MyBookingsModal from './components/MyBookingsModal';
 import CalendarPicker from './components/CalendarPicker';
+<<<<<<< HEAD
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Otp from './pages/Otp';
 import Profile from './pages/Profile';
+=======
+import AuthPage from './components/AuthPage';
+>>>>>>> 0752bc7c212cc2bed2abdfc2ec54c0e3a633a5b1
 import { Calendar, Clock, User, LogOut, Bookmark, RefreshCw, ChevronDown } from 'lucide-react';
 
 export default function App() {
@@ -20,6 +24,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('08:00');
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'login'
 
   // Modals state
   const [authPage, setAuthPage] = useState(null);
@@ -122,6 +127,7 @@ export default function App() {
   const volleyballCourt = data?.floor_7?.find((c) => c.sport_type === 'volleyball');
   const badmintonCourts = data?.floor_7?.filter((c) => c.sport_type === 'badminton') || [];
 
+<<<<<<< HEAD
   if (authPage === 'login') {
     return (
       <Login
@@ -153,6 +159,17 @@ export default function App() {
         onBack={() => setAuthPage('register')}
         onLogin={() => setAuthPage('login')}
         onAuthSuccess={handleAuthSuccess}
+=======
+  if (currentView === 'login') {
+    return (
+      <AuthPage
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
+          setCurrentView('home');
+          fetchStatus(selectedDate, selectedTime);
+        }}
+        onBackToHome={() => setCurrentView('home')}
+>>>>>>> 0752bc7c212cc2bed2abdfc2ec54c0e3a633a5b1
       />
     );
   }
@@ -182,6 +199,7 @@ export default function App() {
             </div>
           </div>
 
+<<<<<<< HEAD
           <div className="flex items-center">
             {currentUser ? (
               <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
@@ -226,13 +244,49 @@ export default function App() {
                   className="rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-red-600"
                 >
                   <LogOut className="h-4 w-4" />
+=======
+          {/* เข้าสู่ระบบ / สมัครสมาชิก หรือ แสดงชื่อผู้ใช้ถ้าล็อกอินแล้ว */}
+          <div className="flex items-center gap-2">
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsMyBookingsOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+                >
+                  <Bookmark className="w-3.5 h-3.5 text-red-600" />
+                  <span>การจองของฉัน</span>
+                </button>
+
+                <div className="flex items-center gap-2 bg-red-50 border border-red-100 px-3 py-1.5 rounded-lg">
+                  <img
+                    src={currentUser.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=kmutnb'}
+                    alt="avatar"
+                    className="w-5 h-5 rounded-full"
+                  />
+                  <span className="text-xs font-semibold text-red-800">
+                    {currentUser.first_name} {currentUser.last_name}
+                  </span>
+                </div>
+
+                <button
+                  onClick={handleLogout}
+                  title="ออกจากระบบ"
+                  className="p-1.5 text-gray-500 hover:text-red-600 rounded-lg hover:bg-gray-100 transition"
+                >
+                  <LogOut className="w-4 h-4" />
+>>>>>>> 0752bc7c212cc2bed2abdfc2ec54c0e3a633a5b1
                 </button>
               </div>
             ) : (
               <button
                 type="button"
+<<<<<<< HEAD
                 onClick={() => setAuthPage('login')}
                 className="rounded-md bg-[#ff8733] px-5 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#ed7424]"
+=======
+                onClick={() => setCurrentView('login')}
+                className="px-5 py-1.5 text-xs font-semibold text-red-600 border border-red-500 rounded-full bg-white shadow-xs hover:bg-red-50 cursor-pointer select-none tracking-wide transition"
+>>>>>>> 0752bc7c212cc2bed2abdfc2ec54c0e3a633a5b1
               >
                 เข้าสู่ระบบ / สมัครสมาชิก
               </button>
