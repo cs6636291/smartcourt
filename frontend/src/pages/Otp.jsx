@@ -1,15 +1,44 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import client from '../api/client';
 import { AuthLayout, getApiError, saveSession } from './AuthLayout';
 
-const DEMO_OTP = '123456';
-
 export default function Otp({ registration, onBack, onLogin, onAuthSuccess }) {
   const [digits, setDigits] = useState(Array(6).fill(''));
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [sendMessage, setSendMessage] = useState('');
+  const [testOtp, setTestOtp] = useState('');
+  const [sending, setSending] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const inputRefs = useRef([]);
+  const requestedEmail = useRef('');
+
+  const sendOtp = async () => {
+    if (!registration?.email) {
+      setError('ไม่พบอีเมล กรุณากลับไปกรอกข้อมูลสมัครสมาชิก');
+      return;
+    }
+    setSending(true);
+    setError('');
+    setSendMessage('');
+    setTestOtp('');
+    try {
+      const response = await client.post('/accounts/send-otp/', { email: registration.email });
+      setSendMessage(response.data.message || 'ส่งรหัส OTP แล้ว กรุณาตรวจสอบอีเมล');
+      setTestOtp(response.data.otp || '');
+      setDigits(Array(6).fill(''));
+    } catch (requestError) {
+      setError(getApiError(requestError, 'ส่งรหัส OTP ไม่สำเร็จ กรุณาลองใหม่'));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!registration?.email || requestedEmail.current === registration.email) return;
+    requestedEmail.current = registration.email;
+    sendOtp();
+  }, [registration?.email]);
 
   const updateDigit = (index, value) => {
     const nextValue = value.replace(/\D/g, '').slice(-1);
@@ -34,8 +63,9 @@ export default function Otp({ registration, onBack, onLogin, onAuthSuccess }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
-    if (digits.join('') !== DEMO_OTP) {
-      setError('รหัส OTP ไม่ถูกต้อง สำหรับโหมดทดสอบใช้ 123456');
+    const otp = digits.join('');
+    if (!/^\d{6}$/.test(otp)) {
+      setError('กรุณากรอกรหัส OTP ให้ครบ 6 หลัก');
       return;
     }
     if (!registration) {
@@ -43,8 +73,9 @@ export default function Otp({ registration, onBack, onLogin, onAuthSuccess }) {
       return;
     }
 
-    setLoading(true);
+    setSubmitting(true);
     try {
+      await client.post('/accounts/verify-otp/', { email: registration.email, otp });
       await client.post('/accounts/register/', registration);
       const response = await client.post('/accounts/login/', {
         email: registration.email,
@@ -53,9 +84,9 @@ export default function Otp({ registration, onBack, onLogin, onAuthSuccess }) {
       saveSession(response.data);
       onAuthSuccess(response.data.user);
     } catch (requestError) {
-      setError(getApiError(requestError, 'สมัครสมาชิกไม่สำเร็จ กรุณาตรวจสอบข้อมูล'));
+      setError(getApiError(requestError, 'ยืนยัน OTP หรือสมัครสมาชิกไม่สำเร็จ กรุณาตรวจสอบข้อมูล'));
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -68,6 +99,7 @@ export default function Otp({ registration, onBack, onLogin, onAuthSuccess }) {
         <h2 className="text-center text-lg font-bold">กรอก OTP</h2>
         <p className="mt-2 text-center text-xs text-slate-400">OTP สำหรับ {registration?.email || 'อีเมลของคุณ'}</p>
 
+        {sendMessage && <p role="status" className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{sendMessage}</p>}
         {error && <p role="alert" className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
 
         <form onSubmit={handleSubmit}>
@@ -88,9 +120,12 @@ export default function Otp({ registration, onBack, onLogin, onAuthSuccess }) {
               />
             ))}
           </div>
-          <p className="mt-3 text-center text-[11px] text-slate-400">ระบบยังไม่มี API ส่ง OTP; โหมดทดสอบใช้รหัส 123456</p>
-          <button type="submit" disabled={loading} className="mx-auto mt-4 block rounded-md bg-[#ff8733] px-5 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-[#f47a27] disabled:cursor-wait disabled:opacity-60">
-            {loading ? 'กำลังสมัครสมาชิก...' : 'ยืนยัน'}
+          {/* {testOtp && <p className="mt-3 text-center text-[11px] text-amber-700">รหัสทดสอบจาก server: <strong>{testOtp}</strong></p>} */}
+          <button type="button" onClick={sendOtp} disabled={sending || submitting} className="mx-auto mt-3 block text-xs font-medium text-blue-700 hover:underline disabled:opacity-50">
+            {sending ? 'กำลังส่ง OTP...' : 'ส่ง OTP อีกครั้ง'}
+          </button>
+          <button type="submit" disabled={sending || submitting} className="mx-auto mt-4 block rounded-md bg-[#ff8733] px-5 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-[#f47a27] disabled:cursor-wait disabled:opacity-60">
+            {submitting ? 'กำลังตรวจสอบ...' : 'ยืนยัน'}
           </button>
         </form>
       </main>
