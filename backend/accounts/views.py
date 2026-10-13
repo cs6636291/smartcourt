@@ -138,6 +138,8 @@ class VerifyOTPView(APIView):
         if otp != saved_otp:
             return Response({'error': 'รหัส OTP ไม่ถูกต้อง'}, status=status.HTTP_400_BAD_REQUEST)
 
+        cache.delete(f"otp_{email}")
+        cache.set(f"otp_verified_{email}", True, timeout=600)
         return Response({'message': 'ยืนยันรหัส OTP สำเร็จ'}, status=status.HTTP_200_OK)
 
 
@@ -147,9 +149,16 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
+        email = request.data.get('email', '').strip().lower()
+        if not email or not cache.get(f"otp_verified_{email}"):
+            return Response(
+                {'error': 'กรุณายืนยันอีเมลด้วย OTP ก่อนสมัครสมาชิก'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        cache.delete(f"otp_verified_{email}")
         return Response({
             "message": "สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ",
             "user": UserSerializer(user).data

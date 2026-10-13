@@ -1,4 +1,5 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -68,6 +69,48 @@ class BookingApiTests(APITestCase):
 		self.assertTrue(next_slot_response.data['floor_3'][0]['is_available'])
 		self.assertEqual(invalid_response.status_code, status.HTTP_400_BAD_REQUEST)
 
+	def test_schedule_returns_five_dates_with_available_slots_per_court(self):
+		Appointment.objects.create(
+			user=self.user,
+			court=self.court,
+			date=timezone.localdate(),
+			start_time='08:00',
+			end_time='09:00',
+		)
+		self.client.force_authenticate(user=self.user)
+
+		response = self.client.get('/api/courts/schedule/')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(len(response.data['dates']), 5)
+		first_day_court = response.data['dates'][0]['courts'][0]
+		self.assertNotIn('08:00', first_day_court['available_slots'])
+		self.assertEqual(first_day_court['available_slots'], [])
+		self.assertEqual(response.data['dates'][0]['courts'][1]['available_slots'], [])
+		self.assertEqual(len(response.data['dates'][1]['courts'][0]['available_slots']), 12)
+
+	def test_guest_cannot_view_booking_schedule(self):
+		response = self.client.get('/api/courts/schedule/')
+
+		self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+	def test_past_slots_are_hidden_and_rejected_for_today(self):
+		self.client.force_authenticate(user=self.user)
+		mock_now = timezone.make_aware(datetime.combine(timezone.localdate(), datetime.strptime('10:30', '%H:%M').time()))
+
+		with patch('courts.views.timezone.localtime', return_value=mock_now):
+			schedule_response = self.client.get('/api/courts/schedule/')
+			booking_response = self.client.post(
+				'/api/courts/book/',
+				{**self.booking_payload, 'start_time': '10:00'},
+				format='json',
+			)
+
+		available = schedule_response.data['dates'][0]['courts'][0]['available_slots']
+		self.assertNotIn('10:00', available)
+		self.assertIn('11:00', available)
+		self.assertEqual(booking_response.status_code, status.HTTP_400_BAD_REQUEST)
+
 	def test_booking_rejects_invalid_slot_and_date_outside_five_days(self):
 		self.client.force_authenticate(user=self.user)
 		invalid_slot_payload = {**self.booking_payload, 'start_time': '20:00'}
@@ -89,12 +132,16 @@ class BookingApiTests(APITestCase):
 
 	def test_user_can_book_once_per_day_and_cancel_to_release_slot(self):
 		self.client.force_authenticate(user=self.user)
+		future_payload = {
+			**self.booking_payload,
+			'date': (timezone.localdate() + timedelta(days=1)).isoformat(),
+		}
 		first_response = self.client.post(
-			'/api/courts/book/', self.booking_payload, format='json'
+			'/api/courts/book/', future_payload, format='json'
 		)
 		second_response = self.client.post(
 			'/api/courts/book/',
-			{**self.booking_payload, 'court': self.other_court.pk, 'start_time': '09:00'},
+			{**future_payload, 'court': self.other_court.pk, 'start_time': '09:00'},
 			format='json',
 		)
 
@@ -104,7 +151,7 @@ class BookingApiTests(APITestCase):
 		booking_id = first_response.data['appointment']['id']
 		cancel_response = self.client.post(f'/api/courts/cancel/{booking_id}/')
 		replacement_response = self.client.post(
-			'/api/courts/book/', self.booking_payload, format='json'
+			'/api/courts/book/', future_payload, format='json'
 		)
 
 		self.assertEqual(cancel_response.status_code, status.HTTP_200_OK)

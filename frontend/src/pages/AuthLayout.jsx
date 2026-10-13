@@ -2,14 +2,13 @@ import React from 'react';
 
 export function AuthLayout({ children, onSwitch }) {
   return (
-    <div className="min-h-screen bg-[#f7f8fa] px-4 py-5 text-slate-900 sm:px-8 sm:py-7">
-      <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 rounded-lg border border-[#9db4d3] bg-white px-4 py-3 shadow-sm sm:px-5">
+    <div className="min-h-screen bg-[#f8fafc] px-4 py-6 text-slate-900">
+      <header className="mx-auto flex min-h-20 w-full max-w-6xl items-center justify-between gap-4 rounded-2xl border border-[#9db4d3] bg-white px-5 py-3 shadow-[0_2px_8px_rgba(36,70,110,0.08)]">
         <div className="flex min-w-0 items-center gap-3">
           <img
-            src="https://upload.wikimedia.org/wikipedia/th/1/1b/KMUTNB_Logo.png"
+            src="/assets/kmutnb-logo.png"
             alt="ตราสัญลักษณ์มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ"
-            className="h-10 w-10 shrink-0 object-contain"
-            onError={(event) => { event.currentTarget.style.display = 'none'; }}
+            className="h-12 w-12 shrink-0 object-contain"
           />
           <h1 className="text-sm font-bold leading-snug sm:text-base">
             ระบบจองสนามกีฬา ตึก 40 KMUTNB
@@ -18,7 +17,7 @@ export function AuthLayout({ children, onSwitch }) {
         <button
           type="button"
           onClick={onSwitch}
-          className="shrink-0 rounded-md bg-[#ff8733] px-3 py-2 text-[11px] font-semibold text-slate-950 transition-colors hover:bg-[#f47a27] sm:px-4"
+          className="shrink-0 rounded-lg bg-[#ff8733] px-4 py-3 text-[11px] font-semibold text-white transition-colors hover:bg-[#f47a27] sm:px-6 sm:text-xs"
         >
           เข้าสู่ระบบ / สมัครสมาชิก
         </button>

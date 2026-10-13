@@ -81,6 +81,59 @@ class CourtStatusView(APIView):
         })
 
 
+class CourtScheduleView(APIView):
+    """Return the five-day booking grid with every free one-hour slot."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        local_now = timezone.localtime()
+        today = local_now.date()
+        allowed_dates = [today + timedelta(days=offset) for offset in range(5)]
+        courts = list(Court.objects.all().order_by('floor', 'id'))
+        booked_slots = {
+            (appointment_date, court_id, start_time.strftime('%H:%M'))
+            for appointment_date, court_id, start_time in Appointment.objects.filter(
+                date__range=(allowed_dates[0], allowed_dates[-1]),
+                status='confirmed',
+            ).values_list('date', 'court_id', 'start_time')
+        }
+        user_booking_dates = set(Appointment.objects.filter(
+            user=request.user,
+            date__range=(allowed_dates[0], allowed_dates[-1]),
+            status='confirmed',
+        ).values_list('date', flat=True))
+
+        dates = []
+        for schedule_date in allowed_dates:
+            court_rows = []
+            for court in courts:
+                available_slots = [
+                    slot for slot in TIME_SLOTS
+                    if (schedule_date, court.id, slot) not in booked_slots
+                    and schedule_date not in user_booking_dates
+                    and not (
+                        schedule_date == today
+                        and int(slot[:2]) * 60 <= local_now.hour * 60 + local_now.minute
+                    )
+                ]
+                court_rows.append({
+                    'id': court.id,
+                    'name': court.name,
+                    'floor': court.floor,
+                    'sport_type': court.sport_type,
+                    'available_slots': available_slots,
+                })
+            dates.append({
+                'date': schedule_date.isoformat(),
+                'courts': court_rows,
+            })
+
+        return Response({
+            'time_slots': TIME_SLOTS,
+            'dates': dates,
+        })
+
+
 class AppointmentCreateView(generics.CreateAPIView):
     """
     จองสนาม: ต้องล็อกอิน (IsAuthenticated)
@@ -110,7 +163,8 @@ class AppointmentCreateView(generics.CreateAPIView):
         if book_date.isoformat() != book_date_str:
             return Response({'error': 'รูปแบบวันที่ไม่ถูกต้อง (YYYY-MM-DD)'}, status=status.HTTP_400_BAD_REQUEST)
 
-        today = timezone.localdate()
+        local_now = timezone.localtime()
+        today = local_now.date()
         if not today <= book_date <= today + timedelta(days=4):
             return Response({'error': 'สามารถจองสนามล่วงหน้าได้ไม่เกิน 5 วันนับจากวันปัจจุบัน'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -121,6 +175,14 @@ class AppointmentCreateView(generics.CreateAPIView):
             )
 
         start_time = datetime.strptime(start_time_str, '%H:%M').time()
+        if book_date == today and (
+            start_time.hour * 60 + start_time.minute
+            <= local_now.hour * 60 + local_now.minute
+        ):
+            return Response(
+                {'error': 'ไม่สามารถจองช่วงเวลาที่ผ่านไปแล้วได้'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         end_time = datetime.strptime(
             f'{start_time.hour + 1:02d}:00', '%H:%M'
         ).time()

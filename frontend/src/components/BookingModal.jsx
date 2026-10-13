@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import client from '../api/client';
-import { BasketballGraphic, BadmintonGraphic, FutsalGraphic, VolleyballGraphic } from './CourtGraphics';
+import CourtImage from './CourtImage';
 import { Calendar, CheckCircle2, Clock, MapPin } from 'lucide-react';
 
 export default function BookingModal({
@@ -54,13 +54,6 @@ export default function BookingModal({
   const nextHour = `${String(parseInt(time.split(':')[0]) + 1).padStart(2, '0')}:00`;
   const [year, month, day] = date.split('-');
   const displayDate = `${Number(day)}/${month}/${year}`;
-  const CourtGraphic = {
-    futsal: FutsalGraphic,
-    basketball: BasketballGraphic,
-    volleyball: VolleyballGraphic,
-    badminton: BadmintonGraphic,
-  }[court.sport_type] || FutsalGraphic;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#f1f3f5]/95 p-3 sm:p-6">
       <section className="max-h-full w-full max-w-xl overflow-y-auto rounded-lg border border-[#9db4d3] bg-white p-5 shadow-sm sm:p-7">
@@ -81,8 +74,8 @@ export default function BookingModal({
               <span className="shrink-0 rounded-full bg-orange-50 px-2.5 py-1 text-[10px] font-semibold text-orange-700">รายการใหม่</span>
             </div>
 
-            <div className="my-4 flex h-36 items-center justify-center overflow-hidden rounded-md bg-white sm:h-40">
-              <div className="w-full max-w-xs scale-90 sm:scale-100"><CourtGraphic /></div>
+            <div className="my-4 h-52 overflow-hidden rounded-xl bg-slate-100 sm:h-60">
+              <CourtImage court={court} />
             </div>
 
             <div className="flex items-start gap-2">

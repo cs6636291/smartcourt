@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import client from '../api/client';
-import { AuthLayout, getApiError, saveSession } from './AuthLayout';
+import { AuthLayout, getApiError } from './AuthLayout';
 
-export default function Otp({ registration, onBack, onLogin, onAuthSuccess }) {
+export default function Otp({ registration, onBack, onLogin, onVerified }) {
   const [digits, setDigits] = useState(Array(6).fill(''));
   const [error, setError] = useState('');
   const [sendMessage, setSendMessage] = useState('');
@@ -11,7 +11,6 @@ export default function Otp({ registration, onBack, onLogin, onAuthSuccess }) {
   const [sending, setSending] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const inputRefs = useRef([]);
-  const requestedEmail = useRef('');
 
   const sendOtp = async () => {
     if (!registration?.email) {
@@ -33,12 +32,6 @@ export default function Otp({ registration, onBack, onLogin, onAuthSuccess }) {
       setSending(false);
     }
   };
-
-  useEffect(() => {
-    if (!registration?.email || requestedEmail.current === registration.email) return;
-    requestedEmail.current = registration.email;
-    sendOtp();
-  }, [registration?.email]);
 
   const updateDigit = (index, value) => {
     const nextValue = value.replace(/\D/g, '').slice(-1);
@@ -76,13 +69,7 @@ export default function Otp({ registration, onBack, onLogin, onAuthSuccess }) {
     setSubmitting(true);
     try {
       await client.post('/accounts/verify-otp/', { email: registration.email, otp });
-      await client.post('/accounts/register/', registration);
-      const response = await client.post('/accounts/login/', {
-        email: registration.email,
-        password: registration.password,
-      });
-      saveSession(response.data);
-      onAuthSuccess(response.data.user);
+      onVerified(registration.email);
     } catch (requestError) {
       setError(getApiError(requestError, 'ยืนยัน OTP หรือสมัครสมาชิกไม่สำเร็จ กรุณาตรวจสอบข้อมูล'));
     } finally {

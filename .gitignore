@@ -13,6 +13,8 @@ db.sqlite3
 frontend/node_modules/
 node_modules/
 frontend/dist/
+frontend/.vitest-tmp/
+frontend/frontend/
 dist/
 npm-debug.log*
 yarn-debug.log*

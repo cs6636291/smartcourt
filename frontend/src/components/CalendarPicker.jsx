@@ -83,7 +83,7 @@ export default function CalendarPicker({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 border border-gray-400 hover:border-gray-800 bg-white px-4 py-1.5 rounded-full text-xs font-semibold text-gray-800 shadow-sm transition hover:shadow cursor-pointer"
+        className="flex items-center gap-2 rounded-lg border border-[#9db4d3] bg-white px-4 py-2.5 text-xs font-semibold text-gray-800 transition hover:border-slate-500 hover:shadow-sm cursor-pointer"
       >
         <CalendarIcon className="w-3.5 h-3.5 text-red-600" />
         <span>เลือกวันที่ :</span>

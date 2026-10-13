@@ -1,0 +1,136 @@
+import React from 'react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import App from './App';
+import client from './api/client';
+
+vi.mock('./api/client', () => ({ default: { get: vi.fn(), post: vi.fn() } }));
+
+const court = (id, name, floor, sportType, isAvailable) => ({
+  id, name, floor, sport_type: sportType, is_available: isAvailable,
+  status_text: isAvailable ? 'ว่าง' : 'เต็ม',
+});
+
+const statusResponse = {
+  selected_date: '2026-10-13', selected_time: '08:00',
+  allowed_dates: ['2026-10-13'], time_slots: ['08:00'],
+  floor_3: [
+    court(1, 'สนามฟุตซอล ชั้น 3', '3', 'futsal', true),
+    court(2, 'แป้นบาสเกตบอล 1 ชั้น 3', '3', 'basketball', false),
+  ],
+  floor_7: [
+    court(3, 'สนามวอลเลย์บอล 1 ชั้น 7', '7', 'volleyball', true),
+    ...[1, 2, 3, 4].map((number) => court(3 + number, `สนามแบดมินตัน ${number} ชั้น 7`, '7', 'badminton', true)),
+  ],
+};
+
+const scheduleResponse = {
+  time_slots: ['08:00', '09:00'],
+  dates: [
+    {
+      date: '2026-10-13',
+      courts: [
+        { ...court(1, 'สนามฟุตซอล ชั้น 3', '3', 'futsal', true), available_slots: [] },
+        { ...court(2, 'แป้นบาสเกตบอล 1 ชั้น 3', '3', 'basketball', true), available_slots: ['08:00', '09:00'] },
+        { ...court(3, 'สนามวอลเลย์บอล 1 ชั้น 7', '7', 'volleyball', true), available_slots: ['08:00'] },
+      ],
+    },
+  ],
+};
+
+const myBookingsResponse = [{
+  id: 91,
+  date: '2026-10-13',
+  start_time: '08:00:00',
+  end_time: '09:00:00',
+  status: 'confirmed',
+  court_detail: court(2, 'แป้นบาสเกตบอล 1 ชั้น 3', '3', 'basketball', false),
+}];
+
+const mockGet = (url) => Promise.resolve({
+  data: url === '/courts/schedule/'
+    ? scheduleResponse
+    : url === '/courts/my-bookings/' ? myBookingsResponse : statusResponse,
+});
+
+describe('unauthenticated home page', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    client.get.mockImplementation(mockGet);
+  });
+
+  it('shows the guest header and status overview from the reference design', async () => {
+    render(<App />);
+    expect(screen.getByRole('img', { name: 'KMUTNB Logo' }))
+      .toHaveAttribute('src', '/assets/kmutnb-logo.png');
+    expect(screen.getByRole('button', { name: 'เข้าสู่ระบบ / สมัครสมาชิก' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /sport court status/i })).toBeVisible();
+    expect(screen.getByText('เลือกสนามและเวลาที่ต้องการจอง')).toBeVisible();
+    await waitFor(() => expect(screen.getByText('1 สนามว่าง • 1 สนามเต็ม')).toBeVisible());
+  });
+
+  it('renders every court as an independent card and uses the supplied basketball photo', async () => {
+    render(<App />);
+    await waitFor(() => expect(screen.getByTestId('court-card-2')).toBeVisible());
+    expect(screen.getAllByTestId(/court-card-/)).toHaveLength(7);
+    expect(screen.getByRole('img', { name: 'สนามฟุตซอล ชั้น 3' }))
+      .toHaveAttribute('src', '/assets/futsal-court.jpg');
+    screen.getAllByRole('img', { name: 'แป้นบาสเกตบอล 1 ชั้น 3' })
+      .forEach((image) => expect(image).toHaveAttribute('src', '/assets/basketball-court.jpg'));
+    expect(screen.getByRole('img', { name: 'สนามวอลเลย์บอล 1 ชั้น 7' }))
+      .toHaveAttribute('src', '/assets/volleyball-court.jpg');
+    [1, 2, 3, 4].forEach((number) => {
+      expect(screen.getByRole('img', { name: `สนามแบดมินตัน ${number} ชั้น 7` }))
+        .toHaveAttribute('src', `/assets/badminton-court-${number}.jpg`);
+    });
+  });
+});
+
+describe('authenticated home page', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem('user_info', JSON.stringify({
+      email: 'student@example.com',
+      first_name: 'นักศึกษา',
+    }));
+    client.get.mockImplementation(mockGet);
+  });
+
+  it('keeps the real court photos after login', async () => {
+    render(<App />);
+
+    expect(screen.getByRole('button', { name: 'หน้าหลัก' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'จองสนาม' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'โปรไฟล์' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'ออกจากระบบ' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'ประวัติการจอง' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'หน้าหลัก' })).toHaveClass('bg-[#ff8733]');
+    await waitFor(() => expect(screen.getByTestId('court-card-1')).toBeVisible());
+    expect(screen.getByRole('img', { name: 'สนามฟุตซอล ชั้น 3' }))
+      .toHaveAttribute('src', '/assets/futsal-court.jpg');
+    screen.getAllByRole('img', { name: 'แป้นบาสเกตบอล 1 ชั้น 3' })
+      .forEach((image) => expect(image).toHaveAttribute('src', '/assets/basketball-court.jpg'));
+    expect(screen.getByRole('img', { name: 'สนามวอลเลย์บอล 1 ชั้น 7' }))
+      .toHaveAttribute('src', '/assets/volleyball-court.jpg');
+    expect(screen.getByRole('img', { name: 'สนามแบดมินตัน 4 ชั้น 7' }))
+      .toHaveAttribute('src', '/assets/badminton-court-4.jpg');
+    expect(await screen.findByRole('heading', { name: 'คุณจองแล้ว' })).toBeVisible();
+    expect(within(screen.getByTestId('current-bookings')).getByText(/แป้นบาสเกตบอล 1 ชั้น 3/)).toBeVisible();
+    expect(screen.getByRole('button', { name: /ยกเลิกการจอง แป้นบาส/ })).toBeVisible();
+  });
+
+  it('opens the booking schedule and highlights its navigation button', async () => {
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'จองสนาม' }));
+
+    expect(screen.getByRole('button', { name: 'จองสนาม' })).toHaveClass('bg-[#ff8733]');
+    expect(await screen.findByRole('heading', { name: 'จองสนามกีฬา ชั้น 3' })).toBeVisible();
+    expect(screen.getByRole('tab', { name: 'ชั้น 3' })).toHaveAttribute('aria-selected', 'true');
+    screen.getAllByRole('img', { name: 'แป้นบาสเกตบอล 1 ชั้น 3' })
+      .forEach((image) => expect(image).toHaveAttribute('src', '/assets/basketball-court.jpg'));
+    expect(screen.getByRole('button', { name: /จอง แป้นบาสเกตบอล 1 ชั้น 3 .+ 08:00 - 09:00/ })).toBeVisible();
+    expect(screen.getByText('เต็ม')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'คุณจองแล้ว' })).toBeVisible();
+  });
+});
