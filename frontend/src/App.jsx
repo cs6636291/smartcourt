@@ -61,6 +61,10 @@ export default function App() {
     setActivePage('home');
     setAuthPage(null);
     setPendingRegistration(null);
+    setData((currentData) => currentData
+      ? { ...currentData, user_has_booking: null }
+      : currentData);
+    fetchStatus(selectedDate, selectedTime);
   };
 
   const handleOpenCourts = () => {
@@ -78,7 +82,7 @@ export default function App() {
       return {
         ...currentData,
         [floorKey]: currentData[floorKey]?.map((item) => (
-          item.id === court.id ? { ...item, is_available: false, status_text: 'เต็ม' } : item
+          item.id === court.id ? { ...item, is_available: false, status_text: 'จองแล้ว' } : item
         )),
       };
     });
@@ -153,6 +157,7 @@ export default function App() {
         <HomeDashboard
           data={data}
           loading={loading}
+          currentUser={currentUser}
           selectedDate={selectedDate}
           selectedTime={selectedTime}
           onDateChange={(date) => { setSelectedDate(date); fetchStatus(date, selectedTime); }}
