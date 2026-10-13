@@ -12,7 +12,7 @@ function formatDate(value) {
   });
 }
 
-function ScheduleCourt({ court, date, selectedTime, onSelectSlot }) {
+function ScheduleCourt({ court, date, selectedTime, userHasBooking, onSelectSlot }) {
   const slots = selectedTime
     ? court.available_slots.filter((slot) => slot === selectedTime)
     : court.available_slots;
@@ -24,7 +24,13 @@ function ScheduleCourt({ court, date, selectedTime, onSelectSlot }) {
       </div>
       <h3 className="mt-3 text-xs font-bold text-slate-900">{court.name}</h3>
       <div className="mt-3 flex flex-col items-center gap-2">
-        {slots.length ? slots.map((slot) => (
+        {userHasBooking ? (
+          <button
+            type="button"
+            disabled
+            className="max-w-36 cursor-not-allowed rounded-md bg-slate-200 px-2.5 py-2 text-[11px] font-semibold leading-relaxed text-slate-500"
+          >วันนี้สิทธิ์การจองของคุณหมดแล้ว</button>
+        ) : slots.length ? slots.map((slot) => (
           <button
             key={slot}
             type="button"
@@ -35,7 +41,9 @@ function ScheduleCourt({ court, date, selectedTime, onSelectSlot }) {
             {slot} - {nextHour(slot)}
           </button>
         )) : (
-          <span className="rounded-full border border-orange-300 bg-orange-50 px-3 py-1 text-[11px] font-semibold text-orange-500">เต็ม</span>
+          <span className="rounded-full border border-orange-300 bg-orange-50 px-3 py-1 text-[11px] font-semibold text-orange-600">
+            {selectedTime ? 'ไม่ว่างช่วงนี้' : 'ไม่มีช่วงเวลาว่าง'}
+          </span>
         )}
       </div>
     </div>
@@ -117,7 +125,7 @@ export default function BookingSchedule({ refreshKey, onSelectSlot, bookingSumma
                 <h3 className="text-base font-bold">{formatDate(day.date)}</h3>
                 <div className="mt-6 grid grid-cols-2 gap-7 sm:grid-cols-3 lg:grid-cols-6">
                   {courts.map((court) => (
-                    <ScheduleCourt key={court.id} court={court} date={day.date} selectedTime={selectedTime} onSelectSlot={onSelectSlot} />
+                    <ScheduleCourt key={court.id} court={court} date={day.date} selectedTime={selectedTime} userHasBooking={day.user_has_booking} onSelectSlot={onSelectSlot} />
                   ))}
                 </div>
               </section>

@@ -54,6 +54,7 @@ class BookingApiTests(APITestCase):
 			start_time='08:00',
 			end_time='09:00',
 		)
+		self.client.force_authenticate(user=self.user)
 
 		booked_response = self.client.get(
 			'/api/courts/status/',
@@ -66,6 +67,8 @@ class BookingApiTests(APITestCase):
 		invalid_response = self.client.get('/api/courts/status/', {'time': '08:30'})
 
 		self.assertFalse(booked_response.data['floor_3'][0]['is_available'])
+		self.assertEqual(booked_response.data['floor_3'][0]['status_text'], 'จองแล้ว')
+		self.assertTrue(booked_response.data['user_has_booking'])
 		self.assertTrue(next_slot_response.data['floor_3'][0]['is_available'])
 		self.assertEqual(invalid_response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -86,8 +89,10 @@ class BookingApiTests(APITestCase):
 		first_day_court = response.data['dates'][0]['courts'][0]
 		self.assertNotIn('08:00', first_day_court['available_slots'])
 		self.assertEqual(first_day_court['available_slots'], [])
+		self.assertTrue(response.data['dates'][0]['user_has_booking'])
 		self.assertEqual(response.data['dates'][0]['courts'][1]['available_slots'], [])
 		self.assertEqual(len(response.data['dates'][1]['courts'][0]['available_slots']), 12)
+		self.assertFalse(response.data['dates'][1]['user_has_booking'])
 
 	def test_guest_cannot_view_booking_schedule(self):
 		response = self.client.get('/api/courts/schedule/')

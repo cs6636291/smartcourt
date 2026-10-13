@@ -50,6 +50,11 @@ class CourtStatusView(APIView):
             end_time__gt=selected_time,
             status='confirmed'
         ).values_list('court_id', flat=True))
+        user_has_booking = request.user.is_authenticated and Appointment.objects.filter(
+            user=request.user,
+            date=selected_date,
+            status='confirmed',
+        ).exists()
 
         results_floor_3 = []
         results_floor_7 = []
@@ -62,7 +67,7 @@ class CourtStatusView(APIView):
                 'floor': court.floor,
                 'sport_type': court.sport_type,
                 'is_available': is_available,
-                'status_text': 'ว่าง' if is_available else 'เต็ม',
+                'status_text': 'ว่าง' if is_available else 'จองแล้ว',
             }
             if court.floor == '3':
                 results_floor_3.append(court_data)
@@ -74,6 +79,7 @@ class CourtStatusView(APIView):
         return Response({
             'selected_date': selected_date.strftime('%Y-%m-%d'),
             'selected_time': selected_time_str,
+            'user_has_booking': user_has_booking,
             'time_slots': TIME_SLOTS,
             'allowed_dates': allowed_dates,
             'floor_3': results_floor_3,
@@ -125,6 +131,7 @@ class CourtScheduleView(APIView):
                 })
             dates.append({
                 'date': schedule_date.isoformat(),
+                'user_has_booking': schedule_date in user_booking_dates,
                 'courts': court_rows,
             })
 
