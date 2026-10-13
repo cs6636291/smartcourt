@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import client from './api/client';
 import {
   FutsalGraphic,
@@ -6,11 +6,13 @@ import {
   VolleyballGraphic,
   BadmintonGraphic,
 } from './components/CourtGraphics';
-import AuthModal from './components/AuthModal';
 import BookingModal from './components/BookingModal';
 import MyBookingsModal from './components/MyBookingsModal';
 import CalendarPicker from './components/CalendarPicker';
-import AuthPage from './components/AuthPage';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Otp from './pages/Otp';
+import Profile from './pages/Profile';
 import { Calendar, Clock, User, LogOut, Bookmark, RefreshCw, ChevronDown } from 'lucide-react';
 
 export default function App() {
@@ -21,9 +23,12 @@ export default function App() {
   const [currentView, setCurrentView] = useState('home'); // 'home' | 'login'
 
   // Modals state
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authPage, setAuthPage] = useState(null);
+  const [pendingRegistration, setPendingRegistration] = useState(null);
   const [isMyBookingsOpen, setIsMyBookingsOpen] = useState(false);
   const [selectedCourtForBooking, setSelectedCourtForBooking] = useState(null);
+  const [activePage, setActivePage] = useState('home');
+  const statusRequestId = useRef(0);
 
   // User state
   const [currentUser, setCurrentUser] = useState(() => {
@@ -32,18 +37,20 @@ export default function App() {
   });
 
   const fetchStatus = async (dateVal = selectedDate, timeVal = selectedTime) => {
+    const requestId = ++statusRequestId.current;
     setLoading(true);
     try {
       const params = {};
       if (dateVal) params.date = dateVal;
       if (timeVal) params.time = timeVal;
       const res = await client.get('/courts/status/', { params });
+      if (requestId !== statusRequestId.current) return;
       setData(res.data);
       if (!dateVal) setSelectedDate(res.data.selected_date);
     } catch (err) {
-      console.error("Error fetching court status:", err);
+      if (requestId === statusRequestId.current) console.error("Error fetching court status:", err);
     } finally {
-      setLoading(false);
+      if (requestId === statusRequestId.current) setLoading(false);
     }
   };
 
@@ -78,6 +85,36 @@ export default function App() {
     setCurrentUser(null);
   };
 
+  const handleAuthSuccess = (user) => {
+    setCurrentUser(user);
+    setActivePage('home');
+    setAuthPage(null);
+    setPendingRegistration(null);
+  };
+
+  const handleProfileUpdate = (user) => {
+    setCurrentUser(user);
+    localStorage.setItem('user_info', JSON.stringify(user));
+  };
+
+  const handleBookingSuccess = async ({ court, date, time }) => {
+    setSelectedDate(date);
+    setSelectedTime(time);
+    await fetchStatus(date, time);
+    setData((currentData) => {
+      if (!currentData) return currentData;
+      const floorKey = String(court.floor) === '3' ? 'floor_3' : 'floor_7';
+      return {
+        ...currentData,
+        [floorKey]: currentData[floorKey]?.map((item) => (
+          item.id === court.id
+            ? { ...item, is_available: false, status_text: 'เต็ม' }
+            : item
+        )),
+      };
+    });
+  };
+
   // Courts separation for Floor 3
   const futsalCourt = data?.floor_3?.find((c) => c.sport_type === 'futsal');
   const basketballCourts = data?.floor_3?.filter((c) => c.sport_type === 'basketball') || [];
@@ -86,15 +123,37 @@ export default function App() {
   const volleyballCourt = data?.floor_7?.find((c) => c.sport_type === 'volleyball');
   const badmintonCourts = data?.floor_7?.filter((c) => c.sport_type === 'badminton') || [];
 
-  if (currentView === 'login') {
+  if (authPage === 'login') {
     return (
-      <AuthPage
-        onLoginSuccess={(user) => {
-          setCurrentUser(user);
-          setCurrentView('home');
-          fetchStatus(selectedDate, selectedTime);
+      <Login
+        onBack={() => setAuthPage(null)}
+        onRegister={() => setAuthPage('register')}
+        onAuthSuccess={handleAuthSuccess}
+      />
+    );
+  }
+
+  if (authPage === 'register') {
+    return (
+      <Register
+        initialData={pendingRegistration}
+        onBack={() => setAuthPage('login')}
+        onContinue={(registration) => {
+          setPendingRegistration(registration);
+          setAuthPage('otp');
         }}
-        onBackToHome={() => setCurrentView('home')}
+        onLogin={() => setAuthPage('login')}
+      />
+    );
+  }
+
+  if (authPage === 'otp') {
+    return (
+      <Otp
+        registration={pendingRegistration}
+        onBack={() => setAuthPage('register')}
+        onLogin={() => setAuthPage('login')}
+        onAuthSuccess={handleAuthSuccess}
       />
     );
   }
@@ -124,42 +183,57 @@ export default function App() {
             </div>
           </div>
 
-          {/* เข้าสู่ระบบ / สมัครสมาชิก หรือ แสดงชื่อผู้ใช้ถ้าล็อกอินแล้ว */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             {currentUser ? (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
                 <button
-                  onClick={() => setIsMyBookingsOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+                  type="button"
+                  onClick={() => { setActivePage('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  className="rounded-md border border-[#9db4d3] bg-white px-2.5 py-2 text-[11px] font-medium text-slate-700 hover:bg-slate-50 sm:px-3"
                 >
-                  <Bookmark className="w-3.5 h-3.5 text-red-600" />
-                  <span>การจองของฉัน</span>
+                  หน้าหลัก
                 </button>
-
-                <div className="flex items-center gap-2 bg-red-50 border border-red-100 px-3 py-1.5 rounded-lg">
-                  <img
-                    src={currentUser.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=kmutnb'}
-                    alt="avatar"
-                    className="w-5 h-5 rounded-full"
-                  />
-                  <span className="text-xs font-semibold text-red-800">
-                    {currentUser.first_name} {currentUser.last_name}
-                  </span>
-                </div>
-
                 <button
-                  onClick={handleLogout}
-                  title="ออกจากระบบ"
-                  className="p-1.5 text-gray-500 hover:text-red-600 rounded-lg hover:bg-gray-100 transition"
+                  type="button"
+                  onClick={() => { setActivePage('home'); document.getElementById('courts')?.scrollIntoView({ behavior: 'smooth' }); }}
+                  className="rounded-md bg-[#ff8733] px-2.5 py-2 text-[11px] font-semibold text-slate-950 hover:bg-[#ed7424] sm:px-3"
                 >
-                  <LogOut className="w-4 h-4" />
+                  จองสนาม
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActivePage('profile')}
+                  className={`rounded-md px-2.5 py-2 text-[11px] font-semibold sm:px-3 ${activePage === 'profile' ? 'bg-[#ff8733] text-slate-950' : 'border border-[#9db4d3] bg-white text-slate-700 hover:bg-slate-50'}`}
+                >
+                  โปรไฟล์
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsMyBookingsOpen(true)}
+                  className="flex items-center gap-1 rounded-md border border-[#9db4d3] bg-white px-2.5 py-2 text-[11px] font-medium text-slate-700 hover:bg-slate-50 sm:px-3"
+                >
+                  <Bookmark className="h-3.5 w-3.5" />
+                  <span>ประวัติการจอง</span>
+                </button>
+                <span className="hidden items-center gap-1.5 pl-1 text-xs text-slate-600 md:flex">
+                  <User className="h-4 w-4" />
+                  {currentUser.first_name || currentUser.email}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  aria-label="ออกจากระบบ"
+                  title="ออกจากระบบ"
+                  className="rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-red-600"
+                >
+                  <LogOut className="h-4 w-4" />
                 </button>
               </div>
             ) : (
               <button
                 type="button"
-                onClick={() => setCurrentView('login')}
-                className="px-5 py-1.5 text-xs font-semibold text-red-600 border border-red-500 rounded-full bg-white shadow-xs hover:bg-red-50 cursor-pointer select-none tracking-wide transition"
+                onClick={() => setAuthPage('login')}
+                className="rounded-md bg-[#ff8733] px-5 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#ed7424]"
               >
                 เข้าสู่ระบบ / สมัครสมาชิก
               </button>
@@ -168,8 +242,14 @@ export default function App() {
         </div>
       </header>
 
-      {/* 2. SUBHEADER & FILTER CONTROLS (อิงตาม Mockup: sport court status + เลือกวันที่ + เลือกเวลา) */}
-      <main className="max-w-6xl mx-auto px-4 mt-6">
+      {activePage === 'profile' ? (
+        <Profile
+          user={currentUser}
+          onBack={() => setActivePage('home')}
+          onProfileUpdate={handleProfileUpdate}
+        />
+      ) : (
+      <main id="courts" className="max-w-6xl mx-auto px-4 mt-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
           {/* Status Box Title */}
           <div className="inline-block border border-gray-800 bg-white px-4 py-1.5 rounded shadow-sm">
@@ -374,6 +454,7 @@ export default function App() {
           </div>
         </section>
       </main>
+      )}
 
 
 
@@ -384,8 +465,8 @@ export default function App() {
         currentUser={currentUser}
         isOpen={Boolean(selectedCourtForBooking)}
         onClose={() => setSelectedCourtForBooking(null)}
-        onOpenLogin={() => setIsAuthOpen(true)}
-        onBookingSuccess={() => fetchStatus(selectedDate, selectedTime)}
+        onOpenLogin={() => setAuthPage('login')}
+        onBookingSuccess={handleBookingSuccess}
       />
 
       <MyBookingsModal
