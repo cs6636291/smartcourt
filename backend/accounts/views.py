@@ -1,146 +1,107 @@
-import re
-import random
 import logging
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+import secrets
+import time
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db import IntegrityError, transaction
+from rest_framework import generics, permissions, status, serializers
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from .serializers import RegisterSerializer, UserSerializer
+from .otp import cache_key, limited, normalize_email
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
-EMAIL_REGEX = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        data = super().validate(attrs)
-        # แนบข้อมูล user กลับไปให้ React นำไปใช้งานได้ทันที
+        data = super().validate({**attrs, 'email': normalize_email(attrs.get('email'))})
         data['user'] = UserSerializer(self.user).data
         return data
+
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 
+def error(message, code=400):
+    return Response({'error': message}, status=code)
+
+
 class SendOTPView(APIView):
-    """
-    สร้างรหัส OTP แบบสุ่ม 6 หลัก บันทึกลง Cache (5 นาที) และส่งอีเมลจริงไปยังผู้ใช้
-    """
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        email = request.data.get('email', '').strip()
-        if not email or not re.match(EMAIL_REGEX, email):
-            return Response({'error': 'อีเมลไม่ถูกต้อง'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if User.objects.filter(email=email).exists():
-            return Response({'error': 'อีเมลนี้ถูกใช้งานในระบบแล้ว'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # 1. สุ่มรหัส OTP 6 หลักจริง
-        otp = f"{random.randint(100000, 999999)}"
-        cache.set(f"otp_{email}", otp, timeout=300) # หมดอายุใน 5 นาที
-
-        # 2. ส่งอีเมลจริง
-        subject = f"[SmartCourt ตึก 40 KMUTNB] รหัส OTP สำหรับลงทะเบียน: {otp}"
-        text_message = f"""สวัสดีครับ,
-
-คุณได้ทำการขอรหัสยืนยันตัวตน (OTP) เพื่อลงทะเบียนเข้าใช้งานระบบจองสนามกีฬา ตึก 40 มจพ.
-
-รหัส OTP ของคุณคือ: {otp}
-
-* รหัสนี้มีอายุการใช้งาน 5 นาที
-หากคุณไม่ได้เป็นผู้ขอรหัส กรุณาละเว้นอีเมลฉบับนี้
-
-ขอบคุณครับ,
-ทีมงาน SmartCourt ตึก 40 KMUTNB
-"""
-        html_message = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 25px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="color: #b91c1c; margin: 0;">ระบบจองสนามกีฬา ตึก 40 KMUTNB</h2>
-                <p style="color: #64748b; font-size: 13px; margin: 5px 0 0 0;">มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ</p>
-            </div>
-            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 15px 0;" />
-            <p style="color: #334155; font-size: 15px;">สวัสดีครับ,</p>
-            <p style="color: #334155; font-size: 14px; line-height: 1.6;">
-                คุณได้ทำการขอรหัส OTP เพื่อลงทะเบียนใช้งานระบบจองสนามกีฬา ตึก 40 รหัสยืนยันของคุณคือ:
-            </p>
-            <div style="text-align: center; margin: 25px 0;">
-                <span style="display: inline-block; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #b91c1c; background-color: #fef2f2; border: 2px dashed #ef4444; padding: 12px 28px; border-radius: 8px;">
-                    {otp}
-                </span>
-            </div>
-            <p style="color: #64748b; font-size: 12px; text-align: center;">
-                * รหัส OTP นี้จะหมดอายุภายใน <strong>5 นาที</strong>
-            </p>
-            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-            <p style="color: #94a3b8; font-size: 11px; text-align: center; margin: 0;">
-                หากคุณไม่ได้เป็นผู้ทำรายการนี้ กรุณาละเว้นอีเมลฉบับนี้
-            </p>
-        </div>
-        """
-
-        email_sent = False
-        email_err_msg = ""
-
-        # ตรวจสอบว่ามีการตั้งค่า SMTP หรือไม่
-        if getattr(settings, 'EMAIL_HOST_USER', None) and getattr(settings, 'EMAIL_HOST_PASSWORD', None):
-            sender = f"SmartCourt ตึก 40 <{settings.EMAIL_HOST_USER}>"
-            try:
-                send_mail(
-                    subject=subject,
-                    message=text_message,
-                    from_email=sender,
-                    recipient_list=[email],
-                    html_message=html_message,
-                    fail_silently=False,
-                )
-                email_sent = True
-                print(f"[SUCCESS] Real OTP Email sent to {email}: {otp}")
-            except Exception as e:
-                email_err_msg = str(e)
-                print(f"[EMAIL_ERROR] Failed to send real email: {e}")
-        else:
-            print(f"[INFO] SMTP credentials not set in backend/.env. OTP generated: {otp}")
-
-        return Response({
-            'message': 'ส่งรหัส OTP เรียบร้อยแล้ว กรุณาตรวจสอบกล่องข้อความในอีเมลของคุณ' if email_sent else 'สร้างรหัส OTP เรียบร้อยแล้ว',
-            'email': email,
-            'email_sent': email_sent,
-            'otp': otp if not email_sent else None, # ถ้ายังไม่ได้ตั้ง SMTP หรือส่งไม่ผ่าน จะส่ง OTP ใน response เพื่อให้ทดสอบได้ทันที
-            'error_detail': email_err_msg if email_err_msg else None,
-            'hint': 'กรุณาตั้งค่า EMAIL_HOST_USER และ EMAIL_HOST_PASSWORD ใน backend/.env เพื่อส่งเมลจริง' if not email_sent else None
-        }, status=status.HTTP_200_OK)
+        email = normalize_email(request.data.get('email'))
+        try:
+            serializers.EmailField().run_validation(email)
+        except serializers.ValidationError:
+            return error('อีเมลไม่ถูกต้อง')
+        ip = request.META.get('REMOTE_ADDR', '')
+        if limited('send-ip', ip, 20, 3600) or limited('send-email', email, 5, 3600):
+            return error('ขอรหัสบ่อยเกินไป กรุณาลองใหม่ภายหลัง', 429)
+        if User.objects.filter(email__iexact=email).exists():
+            return error('อีเมลนี้ถูกใช้งานในระบบแล้ว')
+        if not cache.add(cache_key('cooldown', email), True, 60):
+            return error('กรุณารอ 60 วินาทีก่อนขอรหัสใหม่', 429)
+        otp = f'{secrets.randbelow(1000000):06d}'
+        challenge_key = cache_key('challenge', email)
+        cache.delete(challenge_key)
+        try:
+            sent = send_mail(
+                subject='[SmartCourt ตึก 40 KMUTNB] รหัสยืนยันการสมัครสมาชิก',
+                message=f'รหัส OTP ของคุณคือ: {otp}\nรหัสมีอายุ 5 นาที หากไม่ได้ขอรหัส กรุณาละเว้นอีเมลนี้',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email], fail_silently=False,
+            )
+            if sent != 1:
+                raise RuntimeError('mail not delivered')
+        except Exception:
+            logger.warning('OTP email delivery failed')
+            return error('ส่งอีเมลไม่สำเร็จ กรุณาลองใหม่ภายหลัง', 503)
+        cache.set(challenge_key, {'digest': cache_key('code', otp), 'attempts': 0, 'expires': time.time() + 300}, 300)
+        return Response({'message': 'ส่งรหัส OTP เรียบร้อยแล้ว กรุณาตรวจสอบอีเมล', 'email': email, 'email_sent': True})
 
 
 class VerifyOTPView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        email = request.data.get('email', '').strip()
-        otp = request.data.get('otp', '').strip()
-
-        if not email or not otp:
-            return Response({'error': 'กรุณาระบุอีเมลและรหัส OTP'}, status=status.HTTP_400_BAD_REQUEST)
-
-        saved_otp = cache.get(f"otp_{email}")
-        
-        # ตรวจสอบความถูกต้องของรหัส
-        if not saved_otp:
-            return Response({'error': 'รหัส OTP หมดอายุแล้ว กรุณากดส่งใหม่อีกครั้ง'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if otp != saved_otp:
-            return Response({'error': 'รหัส OTP ไม่ถูกต้อง'}, status=status.HTTP_400_BAD_REQUEST)
-
-        cache.delete(f"otp_{email}")
-        cache.set(f"otp_verified_{email}", True, timeout=600)
-        return Response({'message': 'ยืนยันรหัส OTP สำเร็จ'}, status=status.HTTP_200_OK)
+        email = normalize_email(request.data.get('email'))
+        otp = request.data.get('otp', '')
+        if limited('verify-ip', request.META.get('REMOTE_ADDR', ''), 60, 600):
+            return error('ตรวจสอบรหัสบ่อยเกินไป กรุณาลองใหม่ภายหลัง', 429)
+        if not email or not isinstance(otp, str) or len(otp) != 6 or not otp.isascii() or not otp.isdigit():
+            return error('กรุณาระบุอีเมลและรหัส OTP 6 หลัก')
+        key = cache_key('challenge', email)
+        lock = cache_key('verify-lock', email)
+        if not cache.add(lock, True, 30):
+            return error('กำลังตรวจสอบรหัส กรุณาลองอีกครั้ง', 429)
+        try:
+            challenge = cache.get(key)
+            if not challenge or challenge['expires'] <= time.time():
+                cache.delete(key)
+                return error('รหัส OTP หมดอายุหรือถูกใช้แล้ว กรุณาขอรหัสใหม่')
+            if not secrets.compare_digest(challenge['digest'], cache_key('code', otp)):
+                attempts = challenge['attempts'] + 1
+                if attempts >= 5:
+                    cache.delete(key)
+                    return error('กรอกรหัสผิดครบ 5 ครั้ง กรุณาขอรหัสใหม่', 429)
+                cache.set(key, {**challenge, 'attempts': attempts}, timeout=max(1, challenge['expires'] - time.time()))
+                return error('รหัส OTP ไม่ถูกต้อง')
+            cache.delete(key)
+            token = secrets.token_urlsafe(32)
+            cache.set(cache_key('verified', token), email, 600)
+            return Response({'message': 'ยืนยันรหัส OTP สำเร็จ', 'verification_token': token})
+        finally:
+            cache.delete(lock)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -149,20 +110,30 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
     def create(self, request, *args, **kwargs):
-        email = request.data.get('email', '').strip().lower()
-        if not email or not cache.get(f"otp_verified_{email}"):
-            return Response(
-                {'error': 'กรุณายืนยันอีเมลด้วย OTP ก่อนสมัครสมาชิก'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        cache.delete(f"otp_verified_{email}")
-        return Response({
-            "message": "สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ",
-            "user": UserSerializer(user).data
-        }, status=status.HTTP_201_CREATED)
+        email = normalize_email(request.data.get('email'))
+        token = request.data.get('verification_token')
+        if not isinstance(token, str) or len(token) > 128:
+            return error('กรุณายืนยันอีเมลด้วย OTP ก่อนสมัครสมาชิก')
+        key = cache_key('verified', token)
+        if cache.get(key) != email:
+            return error('กรุณายืนยันอีเมลด้วย OTP ก่อนสมัครสมาชิก')
+        lock = cache_key('register-lock', token)
+        if not cache.add(lock, True, 30):
+            return error('กำลังสมัครสมาชิก กรุณาลองอีกครั้ง', 429)
+        try:
+            if cache.get(key) != email:
+                return error('กรุณายืนยันอีเมลด้วย OTP ก่อนสมัครสมาชิก')
+            serializer = self.get_serializer(data={**{field: request.data.get(field) for field in request.data}, 'email': email})
+            serializer.is_valid(raise_exception=True)
+            try:
+                with transaction.atomic():
+                    user = serializer.save()
+            except IntegrityError:
+                return error('อีเมลหรือรหัสนักศึกษาถูกใช้แล้ว กรุณาตรวจสอบข้อมูล')
+            cache.delete(key)
+            return Response({'message': 'สมัครสมาชิกสำเร็จ กรุณาเข้าสู่ระบบ', 'user': UserSerializer(user).data}, status=status.HTTP_201_CREATED)
+        finally:
+            cache.delete(lock)
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -171,3 +142,20 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        raw = request.data.get('refresh')
+        if not isinstance(raw, str):
+            return error('กรุณาระบุ refresh token')
+        try:
+            token = RefreshToken(raw)
+            if str(token['user_id']) != str(request.user.pk):
+                return error('ไม่สามารถออกจากระบบของผู้ใช้อื่นได้', 403)
+            token.blacklist()
+        except TokenError:
+            return error('refresh token ไม่ถูกต้องหรือหมดอายุ')
+        return Response({'message': 'ออกจากระบบแล้ว'})

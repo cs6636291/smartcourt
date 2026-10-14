@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="th"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SmartCourt — Use Case และขอบเขตระบบ</title>
+<style>body{font:16px/1.7 Tahoma,sans-serif;color:#17243b;background:#f4f7fb;margin:0}main{max-width:1100px;margin:30px auto;background:white;padding:36px}h1,h2{line-height:1.4}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #bcc9da;padding:10px;text-align:left;vertical-align:top}th{background:#edf3fb}svg{width:100%;height:auto}button{padding:10px 20px} .note{background:#fff3df;padding:15px}@media print{body{background:white}main{margin:0;padding:0}button{display:none}thead{display:table-header-group}tr{break-inside:avoid}svg{max-height:650px}h2{break-after:avoid}@page{size:A4;margin:15mm}</style>
+<main><button onclick="window.print()">พิมพ์ / บันทึก PDF</button>
+<h1>ระบบจองสนามกีฬา ตึก 40 KMUTNB</h1>
+<p>เอกสาร Use Case และขอบเขตระบบ · ฉบับร่างจัดทำด้วย AI วันที่ 14 ตุลาคม 2569 · ผู้จัดทำ/รหัสนักศึกษา: ................................</p>
+<p class="note">นักศึกษาต้องตรวจทานขอบเขตและคำอธิบายให้ตรงกับระบบที่สาธิต และรับผิดชอบฉบับส่งอาจารย์ เอกสารนี้อ้างอิงโค้ดปัจจุบันและ PDF Requirement ที่ให้ตรวจ</p>
+<h2>1. ขอบเขตและผู้ใช้งาน</h2>
+<p>Backend: Django REST Framework, Frontend: React และ Tailwind CSS, ฐานข้อมูล SQL: SQLite ผู้ใช้ทั่วไปดูสถานะสนาม นักศึกษาสมัครและจองสนาม ผู้ดูแลจัดการข้อมูลผ่าน Django Admin ที่ /admin/ ผู้ดูแลต้องมีสิทธิ์ staff และสิทธิ์ของโมเดลที่เกี่ยวข้อง หรือเป็น superuser</p>
+<h2>2. Use Case Diagram</h2>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 780" role="img" aria-label="Use Case Diagram แสดง Guest นักศึกษา และ Admin เชื่อมกับฟังก์ชัน SmartCourt">
+<defs><g id="actor" fill="none" stroke="#253c60" stroke-width="3"><circle cy="-45" r="15"/><path d="M0 -30V20 M-25 -10H25 M0 20L-22 55 M0 20L22 55"/></g></defs>
+<rect x="225" y="30" width="660" height="720" rx="12" fill="#f7faff" stroke="#5274a5" stroke-width="2"/>
+<text x="555" y="60" text-anchor="middle" font-size="22">SmartCourt</text>
+<g stroke="#8a9bb5" fill="none" stroke-width="2"><path d="M115 170L355 110 M115 170L355 180 M115 170L355 250 M115 170L355 320"/><path d="M115 515L355 110 M115 515L355 390 M115 515L355 460 M115 515L355 530 M115 515L355 600 M115 515L355 670"/><path d="M985 470L745 430 M985 470L745 540 M985 470L745 650"/></g>
+<g><use href="#actor" transform="translate(95 160)"/><use href="#actor" transform="translate(95 510)"/><use href="#actor" transform="translate(990 465)"/></g>
+<g font-family="Tahoma,sans-serif" font-size="18" text-anchor="middle"><text x="95" y="240">Guest</text><text x="95" y="590">นักศึกษา</text><text x="990" y="545">Admin</text></g>
+<g fill="white" stroke="#5274a5" stroke-width="2"><ellipse cx="465" cy="110" rx="135" ry="26"/><ellipse cx="465" cy="180" rx="135" ry="26"/><ellipse cx="465" cy="250" rx="135" ry="26"/><ellipse cx="465" cy="320" rx="135" ry="26"/><ellipse cx="465" cy="390" rx="135" ry="26"/><ellipse cx="465" cy="460" rx="135" ry="26"/><ellipse cx="465" cy="530" rx="135" ry="26"/><ellipse cx="465" cy="600" rx="135" ry="26"/><ellipse cx="465" cy="670" rx="135" ry="26"/><ellipse cx="740" cy="430" rx="130" ry="34"/><ellipse cx="740" cy="540" rx="130" ry="34"/><ellipse cx="740" cy="650" rx="130" ry="34"/></g>
+<g font-family="Tahoma,sans-serif" font-size="16" text-anchor="middle" fill="#17243b"><text x="465" y="116">UC01 ดู/กรองสถานะสนาม</text><text x="465" y="186">UC02 ขอและยืนยัน OTP</text><text x="465" y="256">UC03 สมัครสมาชิก</text><text x="465" y="326">UC04 เข้าสู่ระบบ</text><text x="465" y="396">UC05 ดูตารางจอง</text><text x="465" y="466">UC06 ยืนยันจองสนาม</text><text x="465" y="536">UC07 ดูรายการของตนเอง</text><text x="465" y="606">UC08 ยกเลิกการจอง</text><text x="465" y="676">UC09 แก้โปรไฟล์/ออกจากระบบ</text><text x="740" y="436">UC10 จัดการสนาม CRUD</text><text x="740" y="546">UC11 จัดการรายการจอง</text><text x="740" y="656">UC12 จัดการผู้ใช้/สิทธิ์</text></g></svg>
+<p>เส้นทึบแสดงบทบาทที่ใช้ฟังก์ชันได้ การสมัครสมาชิกมีเงื่อนไขว่าต้องยืนยัน OTP ก่อน ส่วนการจองและแก้โปรไฟล์ต้องเข้าสู่ระบบ การจัดการผ่าน Admin ไม่ได้เป็นหน้า React ของนักศึกษา</p>
+<h2>3. ข้อกำหนดและกฎธุรกิจ</h2>
+<ol><li>รับจองตั้งแต่วันนี้ถึงอีก 4 วัน รวม 5 วันตามเวลา Asia/Bangkok</li><li>ช่วงเวลาเริ่ม 08:00 ถึง 19:00 ครั้งละ 1 ชั่วโมง สิ้นสุดไม่เกิน 20:00 และวันนี้ห้ามจองช่วงที่เริ่มไปแล้ว</li><li>ผู้ใช้มีการจอง confirmed ได้สูงสุด 1 รายการต่อวัน เมื่อยกเลิกแล้วสามารถจองใหม่ได้</li><li>สนามเดียวกัน วันและเวลาเดียวกัน มีการจอง confirmed ได้เพียงรายการเดียว</li><li>สนามว่างเมื่อไม่มี confirmed ที่ทับช่วงเวลาที่เลือก รายการ cancelled เป็นประวัติ ไม่ได้ยืนยันว่าช่วงนั้นยังว่าง</li><li>การยกเลิกเปลี่ยนสถานะเป็น cancelled ไม่ลบรายการจริง สมาชิกยกเลิกได้เฉพาะรายการของตนเอง</li><li>รหัสผ่านอย่างน้อย 8 ตัว มีตัวอักษรอังกฤษและตัวเลข อีเมลและรหัสนักศึกษาไม่ซ้ำ Backend บังคับรหัสนักศึกษา ASCII 13 หลักและชื่อ/นามสกุลไม่ว่าง อีเมลโปรไฟล์ล็อกตามบัญชีที่ยืนยัน</li><li>OTP อายุ5นาที ผิดได้ไม่เกิน5ครั้ง ขอซ้ำมี cooldown และจำกัด email/IP เมื่อผ่านแล้วใช้ verification_token ผูกอีเมล อายุ10นาที ใช้สมัครได้ครั้งเดียว ไม่มี OTP ใน API/log แอป ส่งเมลไม่ได้ตอบ503</li><li>ออกจากระบบเพิกถอน refresh token และล้าง session ในหน้าเว็บ access token ที่ออกก่อนหน้ายังมีอายุได้ถึง30นาทีตาม JWT</li></ol>
+<h2>4. รายละเอียด Use Case</h2>
+<table><thead><tr><th>รหัส/ผู้ใช้</th><th>เงื่อนไขก่อนทำและขั้นตอนหลัก</th><th>ผลสำเร็จ / กรณีผิดพลาด</th></tr></thead><tbody>
+<tr><td>UC01 Guest/นักศึกษา</td><td>เปิดหน้าหลัก → เลือกวันและเวลา → ดูสถานะสนาม</td><td>แสดงสถานะตาม API; วันหรือเวลาไม่ถูกต้องต้องแจ้งข้อผิดพลาด</td></tr>
+<tr><td>UC02 Guest</td><td>กรอกอีเมล → ขอ OTP → กรอกรหัสยืนยัน</td><td>OTP ถูกต้องได้รับ verification_token ผูกอีเมล อายุ10นาทีใช้ครั้งเดียว; OTP อายุ5นาที ผิดเกิน5ครั้งถูกล็อก ส่งเมลไม่ได้แจ้งข้อผิดพลาดโดยไม่คืนรหัส</td></tr>
+<tr><td>UC03 Guest</td><td>ผ่าน OTP → กรอกชื่อ นามสกุล ชื่อเล่น เพศ รหัสนักศึกษา รหัสผ่าน → ยืนยัน</td><td>บันทึกสมาชิกและหน้าเว็บเข้าสู่ระบบต่อ; อีเมลล็อกตามขั้นแรก ข้อมูลซ้ำ/ไม่ผ่านเกณฑ์แสดงข้อผิดพลาด</td></tr>
+<tr><td>UC04 Guest</td><td>กรอกอีเมลและรหัสผ่าน → เข้าสู่ระบบ</td><td>ได้รับ JWT และไปหน้าหลัก; ข้อมูลผิดไม่อนุญาตเข้าระบบ</td></tr>
+<tr><td>UC05 นักศึกษา</td><td>เข้าสู่ระบบ → หน้าจอง → เลือกชั้น วัน และเวลา</td><td>แสดงเวลาจองได้; วันที่มีการจองของตนเองแล้วปิดสิทธิ์จองเพิ่ม</td></tr>
+<tr><td>UC06 นักศึกษา</td><td>มีสิทธิ์จอง → เลือกเวลาว่าง → ตรวจรายละเอียด → ยืนยัน</td><td>บันทึก Appointment เป็น confirmed และโหลดข้อมูลใหม่; จองซ้ำ/เกินสิทธิ์/นอกช่วงเวลาปฏิเสธที่ Backend</td></tr>
+<tr><td>UC07 นักศึกษา</td><td>เข้าสู่ระบบ → ดูรายการของตนเองบนหน้าหลัก/หน้าจอง</td><td>แสดงรายการ confirmed ของตนเอง; API ประวัติส่งข้อมูลเฉพาะเจ้าของ</td></tr>
+<tr><td>UC08 นักศึกษา</td><td>เลือกรายการตนเอง → กดยกเลิก → ตรวจรายละเอียดใน popup → ยืนยัน</td><td>เปลี่ยนเป็น cancelled และคืนสิทธิ์; ย้อนกลับไม่ยกเลิก รายการคนอื่น/ยกเลิกแล้วปฏิเสธ</td></tr>
+<tr><td>UC09 นักศึกษา</td><td>โปรไฟล์ → แก้ข้อมูล → บันทึก หรือกดออกจากระบบ</td><td>บันทึกข้อมูลผ่าน API; ข้อมูลผิด/ซ้ำแจ้งข้อผิดพลาด ออกจากระบบล้าง session ในหน้าเว็บ</td></tr>
+<tr><td>UC10 Admin</td><td>เข้าสู่ /admin/ ด้วยสิทธิ์เหมาะสม → เพิ่ม/ดู/แก้ไข/ลบสนาม</td><td>ข้อมูลสนามเปลี่ยนในฐานข้อมูล; การลบสนามมีผลลบรายการจองที่เกี่ยวข้องตาม CASCADE ต้องพิจารณาก่อนทำ</td></tr>
+<tr><td>UC11 Admin</td><td>Admin → รายการจอง → ค้นหา/กรอง → จัดการตามสิทธิ์</td><td>จัดการข้อมูลและสถานะ; กฎในโมเดลยังตรวจสอบก่อนบันทึก</td></tr>
+<tr><td>UC12 Admin</td><td>Admin → Users → จัดการผู้ใช้ กลุ่ม และสิทธิ์</td><td>บัญชี/สิทธิ์ถูกบันทึกตามระบบ Django; ผู้ไม่มีสิทธิ์ไม่สามารถจัดการ</td></tr>
+</tbody></table>
+<h2>5. Flow ที่ใช้สาธิต</h2>
+<p>สมัคร: อีเมล → ขอ OTP → ยืนยัน OTP → ข้อมูลสมาชิก → บันทึก → เข้าสู่ระบบ → หน้าหลัก</p>
+<p>จอง: เข้าสู่ระบบ → เลือกวัน/เวลา/สนาม → ตรวจรายละเอียด → ยืนยัน → บันทึก confirmed → แสดงรายการของตนเอง</p>
+<p>ยกเลิก: รายการของตนเอง → popup ยืนยัน → ยืนยัน → เปลี่ยน cancelled → โหลดสถานะและสิทธิ์ใหม่</p>
+<p>CRUD สนาม: Admin → Courts → เพิ่ม → ตรวจรายการ → แก้ไข → ตรวจข้อมูล → ลบข้อมูลทดสอบ</p>
+<h2>6. นอกขอบเขตปัจจุบัน</h2><p>ชำระเงิน อัปโหลดรูปโปรไฟล์ ระบบอนุมัติโดยเจ้าหน้าที่ การแจ้งเตือนก่อนใช้งาน และการจองต่อเนื่องหลายชั่วโมง ยังไม่มีในระบบนี้</p>
+<p>เอกสารประกอบ: <a href="test-report.html">ผลทดสอบ</a> · <a href="student-assessment.html">ตารางประเมินสำหรับนักศึกษา</a></p></main></html>

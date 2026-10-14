@@ -31,4 +31,18 @@ describe('Login page', () => {
     await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('อีเมลหรือรหัสผ่านไม่ถูกต้อง'));
     expect(screen.getByTestId('login-card')).toContainElement(screen.getByRole('alert'));
   });
+  it('persists returned tokens and user only after successful login', async () => {
+    localStorage.clear();
+    const success = vi.fn();
+    const user = { email: 'student@example.com', first_name: 'Student' };
+    client.post.mockResolvedValueOnce({ data: { access: 'access', refresh: 'refresh', user } });
+    render(<Login onBack={vi.fn()} onRegister={vi.fn()} onAuthSuccess={success} />);
+    fireEvent.change(screen.getByLabelText('อีเมล'), { target: { value: user.email } });
+    fireEvent.change(screen.getByLabelText('รหัสผ่าน'), { target: { value: 'Password123' } });
+    fireEvent.click(screen.getByRole('button', { name: 'เข้าสู่ระบบ' }));
+    await waitFor(() => expect(success).toHaveBeenCalledWith(user));
+    expect(localStorage.getItem('access_token')).toBe('access');
+    expect(localStorage.getItem('refresh_token')).toBe('refresh');
+    expect(JSON.parse(localStorage.getItem('user_info'))).toEqual(user);
+  });
 });

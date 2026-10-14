@@ -1,0 +1,99 @@
+Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+
+Found 47 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: corsheaders, messages, rest_framework, staticfiles
+  Apply all migrations: accounts, admin, auth, contenttypes, courts, sessions, token_blacklist
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying accounts.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying courts.0001_initial... OK
+  Applying courts.0002_appointment_uniq_confirmed_court_slot_and_more... OK
+  Applying sessions.0001_initial... OK
+  Applying token_blacklist.0001_initial... OK
+  Applying token_blacklist.0002_outstandingtoken_jti_hex... OK
+  Applying token_blacklist.0003_auto_20171017_2007... OK
+  Applying token_blacklist.0004_auto_20171017_2013... OK
+  Applying token_blacklist.0005_remove_outstandingtoken_jti... OK
+  Applying token_blacklist.0006_auto_20171017_2113... OK
+  Applying token_blacklist.0007_auto_20171017_2214... OK
+  Applying token_blacklist.0008_migrate_to_bigautofield... OK
+  Applying token_blacklist.0010_fix_migrate_to_bigautofield... OK
+  Applying token_blacklist.0011_linearizes_history... OK
+  Applying token_blacklist.0012_alter_outstandingtoken_user... OK
+  Applying token_blacklist.0013_alter_blacklistedtoken_options_and_more...test_login_profile_refresh_and_invalid_credentials (accounts.tests.ProfileAndJwtTests.test_login_profile_refresh_and_invalid_credentials) ... ok
+test_logout_rejects_invalid_token (accounts.tests.ProfileAndJwtTests.test_logout_rejects_invalid_token) ... ok
+test_logout_revokes_refresh_and_requires_token_owner (accounts.tests.ProfileAndJwtTests.test_logout_revokes_refresh_and_requires_token_owner) ... ok
+test_profile_email_change_rejected (accounts.tests.ProfileAndJwtTests.test_profile_email_change_rejected) ... ok
+test_profile_requires_authentication_and_expired_jwt_rejected (accounts.tests.ProfileAndJwtTests.test_profile_requires_authentication_and_expired_jwt_rejected) ... ok
+test_profile_requires_exact_student_id_and_nonblank_names (accounts.tests.ProfileAndJwtTests.test_profile_requires_exact_student_id_and_nonblank_names) ... ok
+test_profile_save_and_duplicate_student_id (accounts.tests.ProfileAndJwtTests.test_profile_save_and_duplicate_student_id) ... ok
+test_expired_challenge_cannot_verify (accounts.tests.RegistrationOtpTests.test_expired_challenge_cannot_verify) ... ok
+test_expired_registration_token_rejected (accounts.tests.RegistrationOtpTests.test_expired_registration_token_rejected) ... ok
+test_registration_accepts_email_after_verified_otp (accounts.tests.RegistrationOtpTests.test_registration_accepts_email_after_verified_otp) ... ok
+test_registration_database_conflict_is_safe_client_error (accounts.tests.RegistrationOtpTests.test_registration_database_conflict_is_safe_client_error) ... ok
+test_registration_rejects_duplicate_student_id_and_email_case (accounts.tests.RegistrationOtpTests.test_registration_rejects_duplicate_student_id_and_email_case) ... ok
+test_registration_rejects_email_without_verified_otp (accounts.tests.RegistrationOtpTests.test_registration_rejects_email_without_verified_otp) ... ok
+test_registration_validation_password_names_student_id (accounts.tests.RegistrationOtpTests.test_registration_validation_password_names_student_id) ... ok
+test_send_cooldown_normalizes_email (accounts.tests.RegistrationOtpTests.test_send_cooldown_normalizes_email) ... ok
+test_send_email_hourly_limit_survives_cooldown (accounts.tests.RegistrationOtpTests.test_send_email_hourly_limit_survives_cooldown) ... ok
+test_send_limits_ip_across_different_emails (accounts.tests.RegistrationOtpTests.test_send_limits_ip_across_different_emails) ... ok
+test_send_rejects_invalid_email_and_nonstring_input (accounts.tests.RegistrationOtpTests.test_send_rejects_invalid_email_and_nonstring_input) ... ok
+test_smtp_failure_does_not_expose_otp_or_internal_error (accounts.tests.RegistrationOtpTests.test_smtp_failure_does_not_expose_otp_or_internal_error) ... OTP email delivery failed
+ok
+test_two_email_domains_same_prefix_register_without_username_collision (accounts.tests.RegistrationOtpTests.test_two_email_domains_same_prefix_register_without_username_collision) ... ok
+test_verification_token_bound_to_email_and_single_use (accounts.tests.RegistrationOtpTests.test_verification_token_bound_to_email_and_single_use) ... ok
+test_verified_email_alone_cannot_register (accounts.tests.RegistrationOtpTests.test_verified_email_alone_cannot_register) ... ok
+test_verify_ip_limit_covers_missing_and_invalid_challenges (accounts.tests.RegistrationOtpTests.test_verify_ip_limit_covers_missing_and_invalid_challenges) ... ok
+test_wrong_attempts_lock_challenge_and_valid_otp_cannot_be_reused (accounts.tests.RegistrationOtpTests.test_wrong_attempts_lock_challenge_and_valid_otp_cannot_be_reused) ... ok
+test_database_constraints_reject_duplicate_slot_and_user_day_without_model_validation (courts.test_admin.BookingIntegrityTests.test_database_constraints_reject_duplicate_slot_and_user_day_without_model_validation) ... ok
+test_different_accounts_cannot_book_same_slot_but_can_book_next_hour (courts.test_admin.BookingIntegrityTests.test_different_accounts_cannot_book_same_slot_but_can_book_next_hour) ... ok
+test_guest_cannot_cancel_booking (courts.test_admin.BookingIntegrityTests.test_guest_cannot_cancel_booking) ... ok
+test_integrity_conflict_returns_409_instead_of_server_error (courts.test_admin.BookingIntegrityTests.test_integrity_conflict_returns_409_instead_of_server_error) ... ok
+test_invalid_booking_inputs_return_client_errors_without_writes (courts.test_admin.BookingIntegrityTests.test_invalid_booking_inputs_return_client_errors_without_writes) ... ok
+test_my_bookings_is_owner_isolated_and_guest_is_denied (courts.test_admin.BookingIntegrityTests.test_my_bookings_is_owner_isolated_and_guest_is_denied) ... ok
+test_repeat_cancellation_keeps_history (courts.test_admin.BookingIntegrityTests.test_repeat_cancellation_keeps_history) ... ok
+test_sqlite_locked_booking_returns_retryable_409 (courts.test_admin.BookingIntegrityTests.test_sqlite_locked_booking_returns_retryable_409) ... ok
+test_status_rejects_malformed_date (courts.test_admin.BookingIntegrityTests.test_status_rejects_malformed_date) ... ok
+test_unrelated_database_error_is_not_disguised_as_booking_conflict (courts.test_admin.BookingIntegrityTests.test_unrelated_database_error_is_not_disguised_as_booking_conflict) ... ok
+test_admin_creates_reads_updates_and_deletes_court (courts.test_admin.CourtAdminTests.test_admin_creates_reads_updates_and_deletes_court) ... ok
+test_admin_delete_confirmation_lists_booking_and_cascades_on_confirm (courts.test_admin.CourtAdminTests.test_admin_delete_confirmation_lists_booking_and_cascades_on_confirm) ... ok
+test_admin_invalid_court_choice_does_not_save (courts.test_admin.CourtAdminTests.test_admin_invalid_court_choice_does_not_save) ... ok
+test_guest_and_member_cannot_access_or_modify_admin_courts (courts.test_admin.CourtAdminTests.test_guest_and_member_cannot_access_or_modify_admin_courts) ... ok
+test_staff_without_model_permissions_is_forbidden (courts.test_admin.CourtAdminTests.test_staff_without_model_permissions_is_forbidden) ... ok
+test_booking_rejects_invalid_slot_and_date_outside_five_days (courts.tests.BookingApiTests.test_booking_rejects_invalid_slot_and_date_outside_five_days) ... ok
+test_guest_can_view_status_but_cannot_book (courts.tests.BookingApiTests.test_guest_can_view_status_but_cannot_book) ... ok
+test_guest_cannot_view_booking_schedule (courts.tests.BookingApiTests.test_guest_cannot_view_booking_schedule) ... ok
+test_past_slots_are_hidden_and_rejected_for_today (courts.tests.BookingApiTests.test_past_slots_are_hidden_and_rejected_for_today) ... ok
+test_schedule_returns_five_dates_with_available_slots_per_court (courts.tests.BookingApiTests.test_schedule_returns_five_dates_with_available_slots_per_court) ... ok
+test_status_filters_booked_slot_and_rejects_invalid_time (courts.tests.BookingApiTests.test_status_filters_booked_slot_and_rejects_invalid_time) ... ok
+test_user_can_book_once_per_day_and_cancel_to_release_slot (courts.tests.BookingApiTests.test_user_can_book_once_per_day_and_cancel_to_release_slot) ... ok
+test_user_cannot_cancel_another_users_booking (courts.tests.BookingApiTests.test_user_cannot_cancel_another_users_booking) ... ok
+
+----------------------------------------------------------------------
+Ran 47 tests in 16.762s
+
+OK
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+
+ OK
+System check identified no issues (0 silenced).

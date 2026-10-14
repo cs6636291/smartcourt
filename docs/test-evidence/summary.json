@@ -1,0 +1,783 @@
+{
+  "timestamp": "2026-10-14T02:01:20+07:00",
+  "exit_codes": {
+    "backend": 0,
+    "frontend": 0,
+    "build": 0,
+    "e2e": 0
+  },
+  "passed": 110,
+  "total": 110,
+  "cases": [
+    {
+      "id": "TC-B01",
+      "name": "test_login_profile_refresh_and_invalid_credentials",
+      "source": "accounts.tests.ProfileAndJwtTests.test_login_profile_refresh_and_invalid_credentials",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B02",
+      "name": "test_logout_rejects_invalid_token",
+      "source": "accounts.tests.ProfileAndJwtTests.test_logout_rejects_invalid_token",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B03",
+      "name": "test_logout_revokes_refresh_and_requires_token_owner",
+      "source": "accounts.tests.ProfileAndJwtTests.test_logout_revokes_refresh_and_requires_token_owner",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B04",
+      "name": "test_profile_email_change_rejected",
+      "source": "accounts.tests.ProfileAndJwtTests.test_profile_email_change_rejected",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B05",
+      "name": "test_profile_requires_authentication_and_expired_jwt_rejected",
+      "source": "accounts.tests.ProfileAndJwtTests.test_profile_requires_authentication_and_expired_jwt_rejected",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B06",
+      "name": "test_profile_requires_exact_student_id_and_nonblank_names",
+      "source": "accounts.tests.ProfileAndJwtTests.test_profile_requires_exact_student_id_and_nonblank_names",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B07",
+      "name": "test_profile_save_and_duplicate_student_id",
+      "source": "accounts.tests.ProfileAndJwtTests.test_profile_save_and_duplicate_student_id",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B08",
+      "name": "test_expired_challenge_cannot_verify",
+      "source": "accounts.tests.RegistrationOtpTests.test_expired_challenge_cannot_verify",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B09",
+      "name": "test_expired_registration_token_rejected",
+      "source": "accounts.tests.RegistrationOtpTests.test_expired_registration_token_rejected",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B10",
+      "name": "test_registration_accepts_email_after_verified_otp",
+      "source": "accounts.tests.RegistrationOtpTests.test_registration_accepts_email_after_verified_otp",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B11",
+      "name": "test_registration_database_conflict_is_safe_client_error",
+      "source": "accounts.tests.RegistrationOtpTests.test_registration_database_conflict_is_safe_client_error",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B12",
+      "name": "test_registration_rejects_duplicate_student_id_and_email_case",
+      "source": "accounts.tests.RegistrationOtpTests.test_registration_rejects_duplicate_student_id_and_email_case",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B13",
+      "name": "test_registration_rejects_email_without_verified_otp",
+      "source": "accounts.tests.RegistrationOtpTests.test_registration_rejects_email_without_verified_otp",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B14",
+      "name": "test_registration_validation_password_names_student_id",
+      "source": "accounts.tests.RegistrationOtpTests.test_registration_validation_password_names_student_id",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B15",
+      "name": "test_send_cooldown_normalizes_email",
+      "source": "accounts.tests.RegistrationOtpTests.test_send_cooldown_normalizes_email",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B16",
+      "name": "test_send_email_hourly_limit_survives_cooldown",
+      "source": "accounts.tests.RegistrationOtpTests.test_send_email_hourly_limit_survives_cooldown",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B17",
+      "name": "test_send_limits_ip_across_different_emails",
+      "source": "accounts.tests.RegistrationOtpTests.test_send_limits_ip_across_different_emails",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B18",
+      "name": "test_send_rejects_invalid_email_and_nonstring_input",
+      "source": "accounts.tests.RegistrationOtpTests.test_send_rejects_invalid_email_and_nonstring_input",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B19",
+      "name": "test_smtp_failure_does_not_expose_otp_or_internal_error",
+      "source": "accounts.tests.RegistrationOtpTests.test_smtp_failure_does_not_expose_otp_or_internal_error",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B20",
+      "name": "test_two_email_domains_same_prefix_register_without_username_collision",
+      "source": "accounts.tests.RegistrationOtpTests.test_two_email_domains_same_prefix_register_without_username_collision",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B21",
+      "name": "test_verification_token_bound_to_email_and_single_use",
+      "source": "accounts.tests.RegistrationOtpTests.test_verification_token_bound_to_email_and_single_use",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B22",
+      "name": "test_verified_email_alone_cannot_register",
+      "source": "accounts.tests.RegistrationOtpTests.test_verified_email_alone_cannot_register",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B23",
+      "name": "test_verify_ip_limit_covers_missing_and_invalid_challenges",
+      "source": "accounts.tests.RegistrationOtpTests.test_verify_ip_limit_covers_missing_and_invalid_challenges",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B24",
+      "name": "test_wrong_attempts_lock_challenge_and_valid_otp_cannot_be_reused",
+      "source": "accounts.tests.RegistrationOtpTests.test_wrong_attempts_lock_challenge_and_valid_otp_cannot_be_reused",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B25",
+      "name": "test_database_constraints_reject_duplicate_slot_and_user_day_without_model_validation",
+      "source": "courts.test_admin.BookingIntegrityTests.test_database_constraints_reject_duplicate_slot_and_user_day_without_model_validation",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B26",
+      "name": "test_different_accounts_cannot_book_same_slot_but_can_book_next_hour",
+      "source": "courts.test_admin.BookingIntegrityTests.test_different_accounts_cannot_book_same_slot_but_can_book_next_hour",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B27",
+      "name": "test_guest_cannot_cancel_booking",
+      "source": "courts.test_admin.BookingIntegrityTests.test_guest_cannot_cancel_booking",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B28",
+      "name": "test_integrity_conflict_returns_409_instead_of_server_error",
+      "source": "courts.test_admin.BookingIntegrityTests.test_integrity_conflict_returns_409_instead_of_server_error",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B29",
+      "name": "test_invalid_booking_inputs_return_client_errors_without_writes",
+      "source": "courts.test_admin.BookingIntegrityTests.test_invalid_booking_inputs_return_client_errors_without_writes",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B30",
+      "name": "test_my_bookings_is_owner_isolated_and_guest_is_denied",
+      "source": "courts.test_admin.BookingIntegrityTests.test_my_bookings_is_owner_isolated_and_guest_is_denied",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B31",
+      "name": "test_repeat_cancellation_keeps_history",
+      "source": "courts.test_admin.BookingIntegrityTests.test_repeat_cancellation_keeps_history",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B32",
+      "name": "test_sqlite_locked_booking_returns_retryable_409",
+      "source": "courts.test_admin.BookingIntegrityTests.test_sqlite_locked_booking_returns_retryable_409",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B33",
+      "name": "test_status_rejects_malformed_date",
+      "source": "courts.test_admin.BookingIntegrityTests.test_status_rejects_malformed_date",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B34",
+      "name": "test_unrelated_database_error_is_not_disguised_as_booking_conflict",
+      "source": "courts.test_admin.BookingIntegrityTests.test_unrelated_database_error_is_not_disguised_as_booking_conflict",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B35",
+      "name": "test_admin_creates_reads_updates_and_deletes_court",
+      "source": "courts.test_admin.CourtAdminTests.test_admin_creates_reads_updates_and_deletes_court",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B36",
+      "name": "test_admin_delete_confirmation_lists_booking_and_cascades_on_confirm",
+      "source": "courts.test_admin.CourtAdminTests.test_admin_delete_confirmation_lists_booking_and_cascades_on_confirm",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B37",
+      "name": "test_admin_invalid_court_choice_does_not_save",
+      "source": "courts.test_admin.CourtAdminTests.test_admin_invalid_court_choice_does_not_save",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B38",
+      "name": "test_guest_and_member_cannot_access_or_modify_admin_courts",
+      "source": "courts.test_admin.CourtAdminTests.test_guest_and_member_cannot_access_or_modify_admin_courts",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B39",
+      "name": "test_staff_without_model_permissions_is_forbidden",
+      "source": "courts.test_admin.CourtAdminTests.test_staff_without_model_permissions_is_forbidden",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B40",
+      "name": "test_booking_rejects_invalid_slot_and_date_outside_five_days",
+      "source": "courts.tests.BookingApiTests.test_booking_rejects_invalid_slot_and_date_outside_five_days",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B41",
+      "name": "test_guest_can_view_status_but_cannot_book",
+      "source": "courts.tests.BookingApiTests.test_guest_can_view_status_but_cannot_book",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B42",
+      "name": "test_guest_cannot_view_booking_schedule",
+      "source": "courts.tests.BookingApiTests.test_guest_cannot_view_booking_schedule",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B43",
+      "name": "test_past_slots_are_hidden_and_rejected_for_today",
+      "source": "courts.tests.BookingApiTests.test_past_slots_are_hidden_and_rejected_for_today",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B44",
+      "name": "test_schedule_returns_five_dates_with_available_slots_per_court",
+      "source": "courts.tests.BookingApiTests.test_schedule_returns_five_dates_with_available_slots_per_court",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B45",
+      "name": "test_status_filters_booked_slot_and_rejects_invalid_time",
+      "source": "courts.tests.BookingApiTests.test_status_filters_booked_slot_and_rejects_invalid_time",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B46",
+      "name": "test_user_can_book_once_per_day_and_cancel_to_release_slot",
+      "source": "courts.tests.BookingApiTests.test_user_can_book_once_per_day_and_cancel_to_release_slot",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-B47",
+      "name": "test_user_cannot_cancel_another_users_booking",
+      "source": "courts.tests.BookingApiTests.test_user_cannot_cancel_another_users_booking",
+      "state": "ผ่าน",
+      "level": "Django API/Admin · ฐานข้อมูลทดสอบ"
+    },
+    {
+      "id": "TC-F01",
+      "name": "shows the guest header and status overview from the reference design",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/App.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F02",
+      "name": "renders every court as an independent card and uses the supplied basketball photo",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/App.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F03",
+      "name": "refreshes booking eligibility after login before showing home booking actions",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/App.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F04",
+      "name": "revokes the refresh token and immediately clears the local session on logout",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/App.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F05",
+      "name": "shows a recoverable error if court status cannot be loaded",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/App.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F06",
+      "name": "navigates to profile, persists the server update and returns home",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/App.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F07",
+      "name": "clears a failed server logout locally and explains the failure",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/App.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F08",
+      "name": "opens login after the session expires",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/App.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F09",
+      "name": "books a schedule slot, refreshes status, and returns to the home overview",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/App.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F10",
+      "name": "keeps the real court photos after login",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/App.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F11",
+      "name": "opens the booking schedule and highlights its navigation button",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/App.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F12",
+      "name": "shares one refresh for concurrent expired requests and stores rotated refresh",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/api/client.test.js",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F13",
+      "name": "does not try a session refresh when login credentials are wrong",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/api/client.test.js",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F14",
+      "name": "clears session and notifies UI if the refresh is rejected",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/api/client.test.js",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F15",
+      "name": "uses the homepage image for futsal",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingModal.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F16",
+      "name": "uses the homepage image for basketball",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingModal.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F17",
+      "name": "uses the homepage image for volleyball",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingModal.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F18",
+      "name": "uses the homepage image for badminton",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingModal.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F19",
+      "name": "saves court/date/time, refreshes booking data and closes after success",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingModal.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F20",
+      "name": "keeps booking confirmation editable when API fails: { error: 'ช่วงเวลาถูกจองแล้ว' }",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingModal.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F21",
+      "name": "keeps booking confirmation editable when API fails: { detail: 'สิทธิ์จองหมดแล้ว' }",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingModal.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F22",
+      "name": "keeps booking confirmation editable when API fails: null",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingModal.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F23",
+      "name": "sends guests to login without creating a booking",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingModal.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F24",
+      "name": "filters floor and time and passes selected court/date/time to booking",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingSchedule.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F25",
+      "name": "filters a chosen day and prohibits dates outside the allowed booking range",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingSchedule.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F26",
+      "name": "recovers a network error when refreshed and reflects booked-day restrictions",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingSchedule.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F27",
+      "name": "shows a fully booked court without a selectable slot",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/BookingSchedule.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F28",
+      "name": "asks for confirmation before cancelling and returns without cancelling",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/CurrentBookings.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F29",
+      "name": "cancels only after the confirmation button is pressed",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/CurrentBookings.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F30",
+      "name": "retains the booking after a cancellation error and allows retry",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/CurrentBookings.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F31",
+      "name": "clears loading errors on refresh and hides cancelled history",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/CurrentBookings.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F32",
+      "name": "allows a guest or eligible member to start booking an available court: null",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/HomeDashboard.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F33",
+      "name": "allows a guest or eligible member to start booking an available court: { email: 'student@example.com' }",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/HomeDashboard.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F34",
+      "name": "blocks booking if eligibility is true loading false",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/HomeDashboard.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F35",
+      "name": "blocks booking if eligibility is null loading true",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/HomeDashboard.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F36",
+      "name": "blocks booking if eligibility is null loading false",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/HomeDashboard.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F37",
+      "name": "forwards refresh and time-selection actions",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/components/HomeDashboard.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F38",
+      "name": "matches the compact Figma login layout and uses the local logo",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Login.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F39",
+      "name": "shows the failed-login message inside the form card",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Login.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F40",
+      "name": "persists returned tokens and user only after successful login",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Login.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F41",
+      "name": "passes the verified email and opaque proof to registration",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Otp.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F42",
+      "name": "keeps the OTP step on API failure: OTP หมดอายุ",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Otp.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F43",
+      "name": "keeps the OTP step on API failure: OTP นี้ถูกใช้แล้ว",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Otp.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F44",
+      "name": "resends an OTP and clears the previously entered digits",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Otp.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F45",
+      "name": "shows resend network errors and does not advance",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Otp.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F46",
+      "name": "rejects incomplete codes and missing registration before making API requests",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Otp.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F47",
+      "name": "accepts a pasted code, supports keyboard navigation and refuses missing server proof",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Otp.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F48",
+      "name": "locks verified email and saves editable fields using the server response",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Profile.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F49",
+      "name": "retains edits and displays server validation errors without claiming saved",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Profile.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F50",
+      "name": "rejects an invalid student ID before sending a profile update",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Profile.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F51",
+      "name": "asks for email only and sends OTP before continuing",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/Register.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F52",
+      "name": "keeps the email from the first step visible and locked",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/RegistrationDetails.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F53",
+      "name": "submits bound email and verification proof then saves the login session",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/RegistrationDetails.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F54",
+      "name": "blocks registration when verification proof is missing",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/RegistrationDetails.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F55",
+      "name": "retries login without reusing consumed verification proof when login initially fails",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/RegistrationDetails.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F56",
+      "name": "validates รหัสนักศึกษา without calling registration",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/RegistrationDetails.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F57",
+      "name": "validates รหัสผ่าน without calling registration",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/RegistrationDetails.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-F58",
+      "name": "displays server rejection and retains profile values for correction",
+      "source": "C:/Users/bearj/Desktop/smartcourt/frontend/src/pages/RegistrationDetails.test.jsx",
+      "state": "ผ่าน",
+      "level": "React/jsdom · API จำลอง"
+    },
+    {
+      "id": "TC-E01",
+      "name": "E2E01 registration through emailed OTP, locked email, logout and login []",
+      "source": "smartcourt.spec.js",
+      "state": "ผ่าน",
+      "level": "Playwright · Chromium · Backend จริง/SQLite แยก · อีเมลลงไฟล์"
+    },
+    {
+      "id": "TC-E02",
+      "name": "E2E02 book, persist after reload, summaries on both pages, cancel and book again []",
+      "source": "smartcourt.spec.js",
+      "state": "ผ่าน",
+      "level": "Playwright · Chromium · Backend จริง/SQLite แยก · อีเมลลงไฟล์"
+    },
+    {
+      "id": "TC-E03",
+      "name": "E2E03 profile saves to real database, survives reload, email remains locked []",
+      "source": "smartcourt.spec.js",
+      "state": "ผ่าน",
+      "level": "Playwright · Chromium · Backend จริง/SQLite แยก · อีเมลลงไฟล์"
+    },
+    {
+      "id": "TC-E04",
+      "name": "E2E04 two authenticated accounts race for one slot; foreign cancellation denied []",
+      "source": "smartcourt.spec.js",
+      "state": "ผ่าน",
+      "level": "Playwright · Chromium · Backend จริง/SQLite แยก · อีเมลลงไฟล์"
+    },
+    {
+      "id": "TC-E05",
+      "name": "E2E05 mobile booking and centered cancellation popup scrolls internally []",
+      "source": "smartcourt.spec.js",
+      "state": "ผ่าน",
+      "level": "Playwright · Chromium · Backend จริง/SQLite แยก · อีเมลลงไฟล์"
+    }
+  ]
+}

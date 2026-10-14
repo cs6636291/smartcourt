@@ -1,10 +1,10 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import client from './api/client';
 
-vi.mock('./api/client', () => ({ default: { get: vi.fn(), post: vi.fn() } }));
+vi.mock('./api/client', () => ({ default: { get: vi.fn(), post: vi.fn(), patch: vi.fn() } }));
 
 const court = (id, name, floor, sportType, isAvailable) => ({
   id, name, floor, sport_type: sportType, is_available: isAvailable,
@@ -126,6 +126,68 @@ describe('authenticated home page', () => {
       first_name: 'นักศึกษา',
     }));
     client.get.mockImplementation(mockGet);
+  });
+
+  it('revokes the refresh token and immediately clears the local session on logout', async () => {
+    localStorage.setItem('access_token', 'access');
+    localStorage.setItem('refresh_token', 'refresh');
+    client.post.mockResolvedValue({ data: {} });
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'ออกจากระบบ' }));
+    expect(screen.getByRole('button', { name: 'เข้าสู่ระบบ / สมัครสมาชิก' })).toBeVisible();
+    expect(localStorage.getItem('user_info')).toBeNull();
+    expect(localStorage.getItem('access_token')).toBeNull();
+    expect(localStorage.getItem('refresh_token')).toBeNull();
+    expect(client.post).toHaveBeenCalledWith('/accounts/logout/', { refresh: 'refresh' }, { headers: { Authorization: 'Bearer access' } });
+  });
+
+  it('shows a recoverable error if court status cannot be loaded', async () => {
+    client.get.mockRejectedValue(new Error('Network unavailable'));
+    render(<App />);
+    expect(await screen.findByText(/ไม่สามารถโหลดสถานะสนามได้/)).toBeVisible();
+    client.get.mockImplementation(mockGet);
+    fireEvent.click(screen.getByRole('button', { name: 'ลองใหม่' }));
+    await waitFor(() => expect(screen.queryByText(/ไม่สามารถโหลดสถานะสนามได้/)).not.toBeInTheDocument());
+    expect(screen.getByTestId('court-card-1')).toBeVisible();
+  });
+  it('navigates to profile, persists the server update and returns home', async () => {
+    const profile = { email: 'student@example.com', first_name: 'Student', last_name: 'Last', nickname: '', std_id: '1234567890123' };
+    client.get.mockImplementation((url) => url === '/accounts/profile/' ? Promise.resolve({ data: profile }) : mockGet(url));
+    client.patch.mockResolvedValueOnce({ data: { ...profile, nickname: 'New nickname' } });
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'โปรไฟล์' }));
+    fireEvent.change(await screen.findByLabelText('ชื่อเล่น'), { target: { value: 'New nickname' } });
+    fireEvent.click(screen.getByRole('button', { name: 'ยืนยัน' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('บันทึกข้อมูลโปรไฟล์แล้ว');
+    expect(JSON.parse(localStorage.getItem('user_info')).nickname).toBe('New nickname');
+    fireEvent.click(screen.getByRole('button', { name: 'กลับหน้าหลัก' }));
+    expect(screen.getByRole('heading', { name: 'สถานะสนามกีฬา' })).toBeVisible();
+  });
+  it('clears a failed server logout locally and explains the failure', async () => {
+    localStorage.setItem('refresh_token', 'refresh'); client.post.mockRejectedValueOnce(new Error('offline'));
+    render(<App />); fireEvent.click(screen.getByRole('button', { name: 'ออกจากระบบ' }));
+    expect(await screen.findByText(/ออกจากระบบบนอุปกรณ์นี้แล้ว/)).toBeVisible();
+    expect(localStorage.getItem('refresh_token')).toBeNull();
+  });
+  it('opens login after the session expires', async () => {
+    render(<App />);
+    act(() => window.dispatchEvent(new Event('session-expired')));
+    expect(screen.getByRole('heading', { name: 'เข้าสู่ระบบ' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'กลับหน้าหลัก' }));
+    expect(screen.getByRole('button', { name: 'เข้าสู่ระบบ / สมัครสมาชิก' })).toBeVisible();
+  });
+  it('books a schedule slot, refreshes status, and returns to the home overview', async () => {
+    const freeSchedule = { ...scheduleResponse, dates: [{ ...scheduleResponse.dates[0], user_has_booking: false }] };
+    client.get.mockImplementation((url) => url === '/courts/schedule/' ? Promise.resolve({ data: freeSchedule }) : mockGet(url));
+    client.post.mockResolvedValueOnce({ data: { message: 'saved' } });
+    render(<App />); fireEvent.click(screen.getByRole('button', { name: 'จองสนาม' }));
+    fireEvent.click(await screen.findByRole('button', { name: /จอง แป้นบาสเกตบอล 1 ชั้น 3 .+ 08:00 - 09:00/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'ยืนยัน' }));
+    expect(await screen.findByRole('heading', { name: 'การจองสำเร็จ' })).toBeVisible();
+    expect(client.post).toHaveBeenCalledWith('/courts/book/', { court: 2, date: '2026-10-13', start_time: '08:00' });
+    fireEvent.click(screen.getByRole('button', { name: 'กลับสู่หน้าหลัก' }));
+    fireEvent.click(screen.getByRole('button', { name: 'หน้าหลัก' }));
+    expect(screen.getByRole('heading', { name: 'สถานะสนามกีฬา' })).toBeVisible();
   });
 
   it('keeps the real court photos after login', async () => {

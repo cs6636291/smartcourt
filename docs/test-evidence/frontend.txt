@@ -1,0 +1,50 @@
+
+ RUN  v4.1.11 C:/Users/bearj/Desktop/smartcourt/frontend
+      Coverage enabled with v8
+
+ ✓ src/App.test.jsx (11 tests) 907ms
+ ✓ src/components/BookingSchedule.test.jsx (4 tests) 378ms
+ ✓ src/pages/Otp.test.jsx (7 tests) 372ms
+ ✓ src/pages/RegistrationDetails.test.jsx (7 tests) 358ms
+ ✓ src/components/HomeDashboard.test.jsx (6 tests) 228ms
+ ✓ src/components/BookingModal.test.jsx (9 tests) 275ms
+ ✓ src/components/CurrentBookings.test.jsx (4 tests) 259ms
+ ✓ src/pages/Profile.test.jsx (3 tests) 226ms
+ ✓ src/pages/Login.test.jsx (3 tests) 203ms
+ ✓ src/pages/Register.test.jsx (1 test) 143ms
+ ✓ src/api/client.test.js (3 tests) 12ms
+
+ Test Files  11 passed (11)
+      Tests  58 passed (58)
+   Start at  02:00:26
+   Duration  27.06s (transform 231ms, setup 2.06s, import 9.86s, tests 3.36s, environment 9.07s)
+
+JSON report written to C:/Users/bearj/Desktop/smartcourt/docs/test-evidence/frontend-results.json
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   90.03 |    83.23 |   84.13 |   92.93 |                   
+ src               |   78.74 |    72.88 |      60 |   88.04 |                   
+  App.jsx          |   78.74 |    72.88 |      60 |   88.04 | ...18-123,182-185 
+ src/api           |   82.85 |    66.66 |      60 |   84.84 |                   
+  client.js        |   82.85 |    66.66 |      60 |   84.84 | 15-19,24          
+ src/components    |   93.15 |    87.76 |   95.31 |   92.16 |                   
+  BookingModal.jsx |   89.65 |    95.23 |     100 |   88.88 | 31-33             
+  ...gSchedule.jsx |     100 |       88 |     100 |     100 | 66-68             
+  ...darPicker.jsx |   80.39 |    66.66 |   78.57 |   79.59 | 27-28,55-59,64-68 
+  CourtImage.jsx   |     100 |    88.88 |     100 |     100 | 7                 
+  ...tBookings.jsx |     100 |    91.66 |     100 |     100 | 29,118            
+  ...Dashboard.jsx |     100 |    96.96 |     100 |     100 | 30                
+ src/pages         |   96.11 |    86.44 |   94.44 |   98.14 |                   
+  Otp.jsx          |   96.87 |    87.75 |     100 |     100 | 24,40,47-49       
+  Profile.jsx      |   91.83 |     77.5 |   83.33 |   95.23 | 34,81             
+  Register.jsx     |   93.33 |    83.33 |     100 |   93.33 | 20                
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 90.03% ( 479/532 )
+Branches     : 83.23% ( 283/340 )
+Functions    : 84.13% ( 122/145 )
+Lines        : 92.93% ( 421/453 )
+================================================================================

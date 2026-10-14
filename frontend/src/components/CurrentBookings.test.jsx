@@ -62,4 +62,27 @@ describe('CurrentBookings cancellation confirmation', () => {
     expect(onChanged).toHaveBeenCalledOnce();
     expect(await screen.findByRole('heading', { name: 'ยกเลิกการจองแล้ว' })).toBeVisible();
   });
+  it('retains the booking after a cancellation error and allows retry', async () => {
+    client.post.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({ data: {} });
+    const changed = vi.fn(); render(<CurrentBookings refreshKey={0} onChanged={changed} />);
+    fireEvent.click(await screen.findByRole('button', { name: /ยกเลิกการจอง แป้นบาส/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'ยืนยัน' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('ยกเลิกการจองไม่สำเร็จ');
+    expect(changed).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'ยืนยัน' }));
+    expect(await screen.findByRole('heading', { name: 'ยกเลิกการจองแล้ว' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'กลับ' }));
+    expect(screen.queryByRole('button', { name: /ยกเลิกการจอง แป้นบาส/ })).not.toBeInTheDocument();
+  });
+  it('clears loading errors on refresh and hides cancelled history', async () => {
+    client.get.mockRejectedValueOnce(new Error('offline'));
+    const { rerender } = render(<CurrentBookings refreshKey={0} onChanged={vi.fn()} />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('โหลดรายการจองไม่สำเร็จ');
+    client.get.mockResolvedValue({ data: [booking, { ...booking, id: 92, status: 'cancelled', court_detail: { ...booking.court_detail, name: 'Old booking' } }] });
+    rerender(<CurrentBookings refreshKey={1} onChanged={vi.fn()} />);
+    expect(await screen.findByRole('button', { name: /ยกเลิกการจอง แป้นบาส/ })).toBeVisible();
+    expect(screen.queryByText(/Old booking/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
 });

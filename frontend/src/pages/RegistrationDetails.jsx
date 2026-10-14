@@ -5,16 +5,21 @@ import { AuthLayout, getApiError, saveSession } from './AuthLayout';
 
 const initialProfile = { first_name: '', last_name: '', nickname: '', gender: 'male', std_id: '', password: '' };
 
-export default function RegistrationDetails({ email, onBack, onLogin, onAuthSuccess }) {
+export default function RegistrationDetails({ email, verificationToken, onBack, onLogin, onAuthSuccess }) {
   const [profile, setProfile] = useState(initialProfile);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [accountCreated, setAccountCreated] = useState(false);
   const inputClass = 'mt-1.5 w-full rounded-md border border-[#9db4d3] px-3 py-2.5 text-sm outline-none focus:border-[#ff8733] focus:ring-1 focus:ring-[#ff8733]';
   const updateField = (event) => setProfile((current) => ({ ...current, [event.target.name]: event.target.value }));
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
+    if (!verificationToken) {
+      setError('กรุณายืนยัน OTP ก่อนสมัครสมาชิก');
+      return;
+    }
     if (!/^\d{13}$/.test(profile.std_id)) {
       setError('รหัสนักศึกษาต้องเป็นตัวเลข 13 หลัก');
       return;
@@ -24,14 +29,19 @@ export default function RegistrationDetails({ email, onBack, onLogin, onAuthSucc
       return;
     }
     setLoading(true);
+    let created = accountCreated;
     try {
-      const registration = { ...profile, email };
-      await client.post('/accounts/register/', registration);
+      if (!created) {
+        const registration = { ...profile, email, verification_token: verificationToken };
+        await client.post('/accounts/register/', registration);
+        created = true;
+        setAccountCreated(true);
+      }
       const response = await client.post('/accounts/login/', { email, password: profile.password });
       saveSession(response.data);
       onAuthSuccess(response.data.user);
     } catch (requestError) {
-      setError(getApiError(requestError, 'สมัครสมาชิกไม่สำเร็จ กรุณาตรวจสอบข้อมูล'));
+      setError(created ? 'สมัครสมาชิกแล้ว แต่เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง หรือไปหน้าเข้าสู่ระบบ' : getApiError(requestError, 'สมัครสมาชิกไม่สำเร็จ กรุณาตรวจสอบข้อมูล'));
     } finally {
       setLoading(false);
     }
@@ -52,7 +62,7 @@ export default function RegistrationDetails({ email, onBack, onLogin, onAuthSucc
           <label className="text-xs font-medium">อีเมล<input type="email" value={email} readOnly aria-readonly="true" className={`${inputClass} cursor-not-allowed bg-slate-50 text-slate-500`} /></label>
           <label className="text-xs font-medium">รหัสนักศึกษา<input name="std_id" inputMode="numeric" maxLength={13} required value={profile.std_id} onChange={updateField} className={inputClass} /></label>
           <label className="text-xs font-medium">รหัสผ่าน<input name="password" type="password" autoComplete="new-password" required value={profile.password} onChange={updateField} className={inputClass} /></label>
-          <button type="submit" disabled={loading} className="rounded-md bg-[#ff8733] py-2.5 text-sm font-semibold sm:col-span-2">{loading ? 'กำลังสมัคร...' : 'สมัครสมาชิก'}</button>
+          <button type="submit" disabled={loading} className="rounded-md bg-[#ff8733] py-2.5 text-sm font-semibold sm:col-span-2">{loading ? 'กำลังดำเนินการ...' : accountCreated ? 'ลองเข้าสู่ระบบอีกครั้ง' : 'สมัครสมาชิก'}</button>
         </form>
       </main>
     </AuthLayout>

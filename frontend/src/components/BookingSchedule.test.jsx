@@ -1,0 +1,53 @@
+import React from 'react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, expect, it, vi } from 'vitest';
+import BookingSchedule from './BookingSchedule';
+import client from '../api/client';
+vi.mock('../api/client', () => ({ default: { get: vi.fn() } }));
+const court3 = { id: 1, floor: '3', sport_type: 'futsal', name: 'Futsal', available_slots: ['08:00', '09:00'] };
+const court7 = { id: 2, floor: '7', sport_type: 'volleyball', name: 'Volleyball', available_slots: ['09:00'] };
+const dateString = (offset) => { const day = new Date(); day.setDate(day.getDate() + offset); return `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`; };
+const dates = [dateString(0), dateString(1)];
+const schedule = { time_slots: ['08:00', '09:00'], dates: dates.map((date) => ({ date, user_has_booking: false, courts: [court3, court7] })) };
+beforeEach(() => { vi.resetAllMocks(); client.get.mockResolvedValue({ data: schedule }); });
+it('filters floor and time and passes selected court/date/time to booking', async () => {
+  const select = vi.fn(); render(<BookingSchedule refreshKey={0} onSelectSlot={select} />);
+  await screen.findByRole('tabpanel');
+  expect(screen.getAllByRole('button', { name: /จอง Futsal/ })).toHaveLength(4);
+  fireEvent.change(screen.getByLabelText('เลือกเวลา'), { target: { value: '09:00' } });
+  expect(screen.getAllByRole('button', { name: /จอง Futsal/ })).toHaveLength(2);
+  fireEvent.click(screen.getByRole('tab', { name: 'ชั้น 7' }));
+  expect(screen.queryByRole('button', { name: /จอง Futsal/ })).not.toBeInTheDocument();
+  fireEvent.click(screen.getAllByRole('button', { name: /จอง Volleyball/ })[0]);
+  expect(select).toHaveBeenCalledWith(court7, dates[0], '09:00');
+  fireEvent.change(screen.getByLabelText('เลือกเวลา'), { target: { value: '08:00' } });
+  expect(screen.getAllByText('ไม่ว่างช่วงนี้')).toHaveLength(2);
+});
+it('filters a chosen day and prohibits dates outside the allowed booking range', async () => {
+  render(<BookingSchedule refreshKey={0} onSelectSlot={vi.fn()} />);
+  await screen.findByRole('tabpanel');
+  fireEvent.click(screen.getByRole('button', { name: /เลือกวันที่/ }));
+  const day = Number(dates[0].slice(-2));
+  fireEvent.click(screen.getByRole('button', { name: String(day), exact: true }));
+  expect(screen.getAllByRole('button', { name: /จอง Futsal/ })).toHaveLength(2);
+  fireEvent.click(screen.getByRole('button', { name: /เลือกวันที่/ }));
+  expect(screen.getAllByTitle('อยู่นอกช่วงเวลาจองล่วงหน้า 5 วัน').length).toBeGreaterThan(0);
+  screen.getAllByTitle('อยู่นอกช่วงเวลาจองล่วงหน้า 5 วัน').forEach((button) => expect(button).toBeDisabled());
+});
+it('recovers a network error when refreshed and reflects booked-day restrictions', async () => {
+  client.get.mockRejectedValueOnce(new Error('offline'));
+  const { rerender } = render(<BookingSchedule refreshKey={0} onSelectSlot={vi.fn()} />);
+  expect(screen.getByText('กำลังโหลดตารางจอง...')).toBeVisible();
+  expect(await screen.findByRole('alert')).toHaveTextContent('โหลดตารางจองไม่สำเร็จ');
+  client.get.mockResolvedValue({ data: { ...schedule, dates: [{ ...schedule.dates[0], user_has_booking: true }] } });
+  rerender(<BookingSchedule refreshKey={1} onSelectSlot={vi.fn()} />);
+  await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+  expect(await screen.findByRole('button', { name: 'วันนี้สิทธิ์การจองของคุณหมดแล้ว' })).toBeDisabled();
+  expect(screen.queryByRole('button', { name: /จอง Futsal/ })).not.toBeInTheDocument();
+});
+it('shows a fully booked court without a selectable slot', async () => {
+  client.get.mockResolvedValue({ data: { ...schedule, dates: [{ ...schedule.dates[0], courts: [{ ...court3, available_slots: [] }] }] } });
+  render(<BookingSchedule refreshKey={0} onSelectSlot={vi.fn()} />);
+  expect(await screen.findByText('ไม่มีช่วงเวลาว่าง')).toBeVisible();
+  expect(screen.queryByRole('button', { name: /จอง Futsal/ })).not.toBeInTheDocument();
+});

@@ -1,0 +1,13 @@
+[run]
+source = accounts,courts
+omit = */migrations/*,*/tests.py,*/test_*.py,*/apps.py,*/__init__.py
+branch = True
+
+[report]
+show_missing = True
+
+[html]
+directory = ../docs/test-evidence/backend-coverage
+
+[json]
+output = ../docs/test-evidence/backend-coverage.json

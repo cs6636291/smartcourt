@@ -48,9 +48,14 @@ export default function Profile({ user, onBack, onProfileUpdate }) {
     event.preventDefault();
     setError('');
     setSaved(false);
+    if (!/^\d{13}$/.test(form.std_id)) {
+      setError('รหัสนักศึกษาต้องเป็นตัวเลข 13 หลัก');
+      return;
+    }
     setSaving(true);
     try {
-      const response = await client.patch('/accounts/profile/', form);
+      const { email, ...editableProfile } = form;
+      const response = await client.patch('/accounts/profile/', editableProfile);
       setForm(Object.fromEntries(PROFILE_FIELDS.map((field) => [field, response.data[field] || ''])));
       setAvatar(response.data.avatar || '');
       onProfileUpdate(response.data);
@@ -100,8 +105,9 @@ export default function Profile({ user, onBack, onProfileUpdate }) {
                 <input name="nickname" value={form.nickname} onChange={handleChange} className={inputClass} />
               </label>
               <label className="block text-xs font-medium text-slate-800">อีเมล
-                <input name="email" type="email" autoComplete="email" required value={form.email} onChange={handleChange} className={inputClass} />
+                <input name="email" type="email" autoComplete="email" readOnly aria-readonly="true" value={form.email} className={`${inputClass} bg-slate-50 text-slate-500`} />
               </label>
+              <p className="text-xs text-slate-500">อีเมลที่ยืนยันแล้วใช้สำหรับเข้าสู่ระบบและไม่สามารถแก้ไขได้</p>
               <label className="block text-xs font-medium text-slate-800">รหัสนักศึกษา
                 <input name="std_id" inputMode="numeric" maxLength={13} value={form.std_id} onChange={handleChange} className={inputClass} />
               </label>

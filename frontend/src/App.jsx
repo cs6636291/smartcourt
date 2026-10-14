@@ -14,6 +14,8 @@ import RegistrationDetails from './pages/RegistrationDetails';
 export default function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [statusError, setStatusError] = useState('');
+  const [sessionMessage, setSessionMessage] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('08:00');
   const [authPage, setAuthPage] = useState(null);
@@ -30,6 +32,7 @@ export default function App() {
   const fetchStatus = async (dateVal = selectedDate, timeVal = selectedTime) => {
     const requestId = ++statusRequestId.current;
     setLoading(true);
+    setStatusError('');
     try {
       const params = {};
       if (dateVal) params.date = dateVal;
@@ -39,7 +42,7 @@ export default function App() {
       setData(response.data);
       if (!dateVal) setSelectedDate(response.data.selected_date);
     } catch (error) {
-      if (requestId === statusRequestId.current) console.error('Error fetching court status:', error);
+      if (requestId === statusRequestId.current) setStatusError('ไม่สามารถโหลดสถานะสนามได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่');
     } finally {
       if (requestId === statusRequestId.current) setLoading(false);
     }
@@ -47,16 +50,29 @@ export default function App() {
 
   useEffect(() => { fetchStatus(); }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const refresh = localStorage.getItem('refresh_token');
+    const access = localStorage.getItem('access_token');
+    const logoutRequest = refresh ? client.post('/accounts/logout/', { refresh }, { headers: { Authorization: `Bearer ${access}` } }) : null;
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_info');
     setCurrentUser(null);
     setActivePage('home');
     setSelectedCourtForBooking(null);
+    if (logoutRequest) {
+      try { await logoutRequest; } catch { setSessionMessage('ออกจากระบบบนอุปกรณ์นี้แล้ว แต่ไม่สามารถยกเลิกเซสชันที่เซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่อ'); }
+    }
   };
 
+  useEffect(() => {
+    const clearExpiredSession = () => { setCurrentUser(null); setActivePage('home'); setSelectedCourtForBooking(null); setAuthPage('login'); };
+    window.addEventListener('session-expired', clearExpiredSession);
+    return () => window.removeEventListener('session-expired', clearExpiredSession);
+  }, []);
+
   const handleAuthSuccess = (user) => {
+    setSessionMessage('');
     setCurrentUser(user);
     setActivePage('home');
     setAuthPage(null);
@@ -94,9 +110,9 @@ export default function App() {
   };
 
   if (authPage === 'login') return <Login onBack={() => setAuthPage(null)} onRegister={() => setAuthPage('register')} onAuthSuccess={handleAuthSuccess} />;
-  if (authPage === 'otp') return <Otp registration={pendingRegistration} onBack={() => setAuthPage('register')} onLogin={() => setAuthPage('login')} onVerified={() => setAuthPage('details')} />;
+  if (authPage === 'otp') return <Otp registration={pendingRegistration} onBack={() => setAuthPage('register')} onLogin={() => setAuthPage('login')} onVerified={(verified) => { setPendingRegistration(verified); setAuthPage('details'); }} />;
   if (authPage === 'details') {
-    return <RegistrationDetails email={pendingRegistration?.email || ''} onBack={() => setAuthPage('otp')} onLogin={() => setAuthPage('login')} onAuthSuccess={handleAuthSuccess} />;
+    return <RegistrationDetails email={pendingRegistration?.email || ''} verificationToken={pendingRegistration?.verification_token} onBack={() => setAuthPage('otp')} onLogin={() => setAuthPage('login')} onAuthSuccess={handleAuthSuccess} />;
   }
   if (authPage === 'register') {
     return (
@@ -140,6 +156,9 @@ export default function App() {
           )}
         </header>
       </div>
+
+      {sessionMessage && <p role="status" className="mx-auto mt-4 max-w-6xl px-4 text-sm text-amber-700">{sessionMessage}</p>}
+      {statusError && activePage === 'home' && <div role="alert" className="mx-auto mt-4 max-w-6xl rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{statusError}<button type="button" onClick={() => fetchStatus()} className="ml-3 underline">ลองใหม่</button></div>}
 
       {activePage === 'profile' ? (
         <Profile user={currentUser} onBack={() => setActivePage('home')} onProfileUpdate={(user) => { setCurrentUser(user); localStorage.setItem('user_info', JSON.stringify(user)); }} />

@@ -7,7 +7,6 @@ export default function Otp({ registration, onBack, onLogin, onVerified }) {
   const [digits, setDigits] = useState(Array(6).fill(''));
   const [error, setError] = useState('');
   const [sendMessage, setSendMessage] = useState('');
-  const [testOtp, setTestOtp] = useState('');
   const [sending, setSending] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const inputRefs = useRef([]);
@@ -20,11 +19,9 @@ export default function Otp({ registration, onBack, onLogin, onVerified }) {
     setSending(true);
     setError('');
     setSendMessage('');
-    setTestOtp('');
     try {
       const response = await client.post('/accounts/send-otp/', { email: registration.email });
       setSendMessage(response.data.message || 'ส่งรหัส OTP แล้ว กรุณาตรวจสอบอีเมล');
-      setTestOtp(response.data.otp || '');
       setDigits(Array(6).fill(''));
     } catch (requestError) {
       setError(getApiError(requestError, 'ส่งรหัส OTP ไม่สำเร็จ กรุณาลองใหม่'));
@@ -68,8 +65,9 @@ export default function Otp({ registration, onBack, onLogin, onVerified }) {
 
     setSubmitting(true);
     try {
-      await client.post('/accounts/verify-otp/', { email: registration.email, otp });
-      onVerified(registration.email);
+      const response = await client.post('/accounts/verify-otp/', { email: registration.email, otp });
+      if (!response.data.verification_token) throw new Error('Missing verification proof');
+      onVerified({ email: registration.email, verification_token: response.data.verification_token });
     } catch (requestError) {
       setError(getApiError(requestError, 'ยืนยัน OTP หรือสมัครสมาชิกไม่สำเร็จ กรุณาตรวจสอบข้อมูล'));
     } finally {
@@ -107,7 +105,6 @@ export default function Otp({ registration, onBack, onLogin, onVerified }) {
               />
             ))}
           </div>
-          {/* {testOtp && <p className="mt-3 text-center text-[11px] text-amber-700">รหัสทดสอบจาก server: <strong>{testOtp}</strong></p>} */}
           <button type="button" onClick={sendOtp} disabled={sending || submitting} className="mx-auto mt-3 block text-xs font-medium text-blue-700 hover:underline disabled:opacity-50">
             {sending ? 'กำลังส่ง OTP...' : 'ส่ง OTP อีกครั้ง'}
           </button>

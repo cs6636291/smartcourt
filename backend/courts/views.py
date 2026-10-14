@@ -2,7 +2,7 @@ from datetime import date, datetime, timedelta
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, OperationalError, transaction
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -161,6 +161,13 @@ class AppointmentCreateView(generics.CreateAPIView):
         if not all([court_id, book_date_str, start_time_str]):
             return Response({'error': 'กรุณาระบุสนาม วันที่ และเวลาให้ครบถ้วน'}, status=status.HTTP_400_BAD_REQUEST)
 
+        valid_court_id = type(court_id) is int or (
+            isinstance(court_id, str) and court_id.isascii() and court_id.isdecimal()
+            and len(court_id) <= 19
+        )
+        if not valid_court_id or not 0 < int(court_id) <= 9223372036854775807:
+            return Response({'error': 'รหัสสนามต้องเป็นจำนวนเต็มบวก'}, status=status.HTTP_400_BAD_REQUEST)
+
         court = get_object_or_404(Court, pk=court_id)
         
         try:
@@ -211,6 +218,15 @@ class AppointmentCreateView(generics.CreateAPIView):
         except IntegrityError:
             return Response(
                 {'error': 'ช่วงเวลานี้ถูกจองแล้ว หรือคุณมีการจองในวันดังกล่าวแล้ว'},
+                status=status.HTTP_409_CONFLICT,
+            )
+        except OperationalError as exc:
+            # SQLite serializes writes; overlapping requests can lose a write-lock
+            # race before uniqueness is evaluated. Let the client refresh/retry.
+            if str(exc).lower() not in ('database is locked', 'database table is locked'):
+                raise
+            return Response(
+                {'error': 'มีผู้ทำรายการจองพร้อมกัน กรุณาโหลดข้อมูลใหม่แล้วลองอีกครั้ง'},
                 status=status.HTTP_409_CONFLICT,
             )
 
