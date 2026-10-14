@@ -77,7 +77,7 @@ describe('unauthenticated home page', () => {
       .toHaveAttribute('src', '/assets/futsal-court.jpg');
     expect(screen.getAllByRole('button', { name: 'จองสนาม' }).length).toBeGreaterThan(0);
     screen.getAllByRole('img', { name: 'แป้นบาสเกตบอล 1 ชั้น 3' })
-      .forEach((image) => expect(image).toHaveAttribute('src', '/assets/basketball-court.jpg'));
+      .forEach((image) => expect(image).toHaveAttribute('src', '/assets/basketball-court-1.jpg'));
     expect(screen.getByRole('img', { name: 'สนามวอลเลย์บอล 1 ชั้น 7' }))
       .toHaveAttribute('src', '/assets/volleyball-court.jpg');
     [1, 2, 3, 4].forEach((number) => {
@@ -203,7 +203,7 @@ describe('authenticated home page', () => {
     expect(screen.getByRole('img', { name: 'สนามฟุตซอล ชั้น 3' }))
       .toHaveAttribute('src', '/assets/futsal-court.jpg');
     screen.getAllByRole('img', { name: 'แป้นบาสเกตบอล 1 ชั้น 3' })
-      .forEach((image) => expect(image).toHaveAttribute('src', '/assets/basketball-court.jpg'));
+      .forEach((image) => expect(image).toHaveAttribute('src', '/assets/basketball-court-1.jpg'));
     expect(screen.getByRole('img', { name: 'สนามวอลเลย์บอล 1 ชั้น 7' }))
       .toHaveAttribute('src', '/assets/volleyball-court.jpg');
     expect(screen.getByRole('img', { name: 'สนามแบดมินตัน 4 ชั้น 7' }))
@@ -222,7 +222,7 @@ describe('authenticated home page', () => {
     expect(await screen.findByRole('heading', { name: 'จองสนามกีฬา ชั้น 3' })).toBeVisible();
     expect(screen.getByRole('tab', { name: 'ชั้น 3' })).toHaveAttribute('aria-selected', 'true');
     screen.getAllByRole('img', { name: 'แป้นบาสเกตบอล 1 ชั้น 3' })
-      .forEach((image) => expect(image).toHaveAttribute('src', '/assets/basketball-court.jpg'));
+      .forEach((image) => expect(image).toHaveAttribute('src', '/assets/basketball-court-1.jpg'));
     const dailyLimitButtons = screen.getAllByRole('button', { name: 'วันนี้สิทธิ์การจองของคุณหมดแล้ว' });
     expect(dailyLimitButtons.length).toBeGreaterThan(0);
     dailyLimitButtons.forEach((button) => expect(button).toBeDisabled());

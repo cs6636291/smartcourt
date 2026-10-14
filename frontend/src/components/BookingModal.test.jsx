@@ -21,7 +21,7 @@ const renderCourt = (court) => render(<BookingModal {...baseProps} court={court}
 describe('BookingModal court image', () => {
   it.each([
     ['futsal', 'สนามฟุตซอล ชั้น 3', '/assets/futsal-court.jpg'],
-    ['basketball', 'แป้นบาสเกตบอล 2 ชั้น 3', '/assets/basketball-court.jpg'],
+    ['basketball', 'แป้นบาสเกตบอล 2 ชั้น 3', '/assets/basketball-court-2.jpg'],
     ['volleyball', 'สนามวอลเลย์บอล 1 ชั้น 7', '/assets/volleyball-court.jpg'],
     ['badminton', 'สนามแบดมินตัน 3 ชั้น 7', '/assets/badminton-court-3.jpg'],
   ])('uses the homepage image for %s', (sportType, name, expectedSrc) => {
